@@ -1,0 +1,149 @@
+RESTAURANT REVIEW PLATFORM — DATA MODEL AND API
+
+Companion to requirements.txt, which holds the product rules and field limits.
+Items marked (Qn pending) follow that question's suggested default until answered.
+
+1. DATA MODEL (PostgreSQL)
+
+IDs are UUIDs. Timestamps are UTC (timestamptz). Column lengths match the max
+lengths in requirements.txt section 4.
+
+users (ASP.NET Core Identity's user table, plus the columns below)
+- Identity columns: id, email, password hash, email confirmed, lockout state.
+- display_name    required
+- role            Reviewer or Owner; fixed after registration (Q12 pending)
+- created_at
+- Email is unique regardless of case (Identity's normalized email).
+
+restaurants
+- id
+- owner_id        -> users, required
+- title, location, description    required
+- image_key       nullable; server-generated name of the uploaded image file
+- created_at, updated_at
+- Index on owner_id.
+
+cuisines
+- id, name (unique)
+- Seeded with Italian, French, Chinese, Japanese, Indian, Mexican, Greek.
+
+restaurant_cuisines
+- restaurant_id   -> restaurants, deleted with the restaurant
+- cuisine_id      -> cuisines
+- Primary key (restaurant_id, cuisine_id); index on cuisine_id.
+- The API enforces 1 to 3 cuisines per restaurant.
+
+reviews
+- id
+- restaurant_id   -> restaurants, deleted with the restaurant (Q13 pending)
+- reviewer_id     -> users
+- rating          smallint, CHECK between 1 and 5
+- text            nullable
+- created_at, updated_at
+- Index on (restaurant_id, created_at DESC).
+
+Average rating
+- Computed in the query as ROUND(AVG(rating)::numeric, 2); NULL with no reviews.
+- Use that one value for display, filtering and sorting. Don't round again in C#:
+  Math.Round uses banker's rounding, so 4.125 would become 4.12, not 4.13.
+
+2. API CONVENTIONS
+
+- JSON under /api, over HTTPS. The React app is served from the same site.
+- Sign-in uses an httpOnly, Secure, SameSite=Lax cookie that expires after 7 days
+  without use. Requests that change data must send the X-XSRF-TOKEN header, copied
+  from the XSRF-TOKEN cookie (see GET /api/auth/csrf).
+- The signed-in user's ID and role come from the cookie, never from the request.
+- Errors use ProblemDetails; validation errors (400) list messages per field.
+- Status codes:
+  400  invalid input
+  401  not signed in
+  403  wrong role, or the user can see the item but isn't allowed to change it
+  404  doesn't exist, or the user isn't allowed to see it
+- Lists are paginated: ?page=1&pageSize=12 (pageSize up to 50). Responses look
+  like { items, page, pageSize, totalCount } (Q15 pending).
+
+3. ENDPOINTS
+
+Who can call: Anyone; User (any signed-in user); Reviewer; Restaurant owner (a user
+with the Owner role). "(own only)" means only for restaurants they own.
+
+Auth
+GET    /api/auth/csrf                     Anyone -> 204, sets the XSRF-TOKEN cookie
+       Call on app startup and after login and logout.
+POST   /api/auth/register                 Anyone
+       { email, password, displayName, role } -> 201, no body
+       400 with an error on the email field if the email is already registered
+POST   /api/auth/login                    Anyone
+       { email, password } -> 200 Me, sets the cookie
+       401 if the credentials are wrong or the account is locked
+POST   /api/auth/logout                   User -> 204
+GET    /api/auth/me                       User -> 200 Me
+Later (Q11): verify email, resend verification email, forgot password,
+reset password.
+
+Cuisines
+GET    /api/cuisines                      User -> 200 [ { id, name } ]
+
+Restaurants
+GET    /api/restaurants                   Reviewer
+       Filters and sorting in section 4
+       -> 200 OK with one page of RestaurantSummary items
+GET    /api/me/restaurants                Restaurant owner
+       Own restaurants, newest first
+       -> 200 OK with one page of RestaurantSummary items
+GET    /api/restaurants/{id}              Reviewer, or Restaurant owner (own only)
+       -> 200 RestaurantDetail
+POST   /api/restaurants                   Restaurant owner
+       RestaurantInput -> 201 RestaurantDetail
+PUT    /api/restaurants/{id}              Restaurant owner (own only)
+       RestaurantInput -> 200 RestaurantDetail
+DELETE /api/restaurants/{id}              Restaurant owner (own only)
+       -> 204; also deletes its reviews and image
+PUT    /api/restaurants/{id}/image        Restaurant owner (own only)
+       multipart/form-data field "file" -> 200 { imageUrl }
+DELETE /api/restaurants/{id}/image        Restaurant owner (own only) -> 204
+GET    /api/restaurants/{id}/image        Reviewer, or Restaurant owner (own only)
+       -> image file
+
+Reviews
+GET    /api/restaurants/{id}/reviews      Reviewer, or Restaurant owner (own only)
+       Newest first -> 200 OK with one page of Review items
+POST   /api/restaurants/{id}/reviews      Reviewer
+       ReviewInput -> 201 Review
+PUT    /api/reviews/{id}                  Reviewer who authored
+       ReviewInput -> 200 Review
+DELETE /api/reviews/{id}                  Reviewer who authored -> 204
+
+4. RESTAURANT LIST FILTERS AND SORTING (GET /api/restaurants)
+
+- cuisineIds: repeatable; returns only restaurants that have all of them.
+- minRating, maxRating: decimals from 1 to 5 (up to 2 places), both inclusive;
+  min can't be greater than max. If either is set, unrated restaurants are hidden.
+- sort: ratingDesc (default) or ratingAsc. Unrated restaurants come last in both;
+  equal ratings are ordered by title, then ID (Q14 pending).
+- Saved filter and sort preferences live in the browser, per account (Q10 pending).
+
+5. REQUEST AND RESPONSE SHAPES
+
+Me                { id, email, displayName, role }
+RestaurantInput   { title, location, description, cuisineIds (1 to 3) }
+RestaurantSummary { id, title, imageUrl, location, cuisines [ { id, name } ],
+                    averageRating, reviewCount }
+RestaurantDetail  RestaurantSummary + { description, createdAt, updatedAt }
+ReviewInput       { rating, text (optional) }
+Review            { id, rating, text, authorDisplayName, createdAt, updatedAt,
+                    isMine }
+- imageUrl is null when there's no image; the app then shows the default image.
+- averageRating is null when there are no reviews; the app shows "No reviews".
+- isMine only decides whether edit/delete buttons show; the server still checks.
+
+6. IMAGE UPLOADS
+
+- JPG/JPEG, PNG or WebP, up to 10 MB. Check the file's actual content, not just
+  its name or declared type.
+- Save it under a server-generated name; never build a path from the uploaded name.
+- Replacing or deleting the image, or deleting the restaurant, removes the old file.
+- imageUrl ends with ?v=<image_key>, so the URL changes whenever the image does and
+  browsers load the new image instead of a cached old one. The server ignores v.
+- When deployed, store files somewhere persistent (for example Azure Blob Storage).

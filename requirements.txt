@@ -59,31 +59,32 @@ Restaurant information
   Derive the owner identity from the authenticated session, not submitted data.
 - Store passwords using an established password-hashing implementation.
 - Use secure session handling and protect authentication endpoints against abuse.
+  Sessions use an httpOnly cookie that expires after 7 days without use; accounts
+  lock for 5 minutes after 5 failed sign-ins.
 - Validate data on the server as well as in the browser.
+- Max lengths: title 100, location 200, description 2,000, review text 2,000,
+  email 254, display name 50 characters. Title, location, description and display
+  name are required. Trim input and reject blank-only values.
+- Passwords: 8 to 128 characters, with no forced symbols or digits.
 - Treat email addresses case-insensitively for account uniqueness.
 - Persist restaurant, user, and review data in a database.
 - Persist browsing preferences per account in the same browser initially.
-- Use a controlled cuisine list to avoid inconsistent filter values.
+- Use a controlled cuisine list, stored in the database, to avoid inconsistent filter
+  values. Start with Italian, French, Chinese, Japanese, Indian, Mexican and Greek.
+  Each restaurant has 1 to 3 cuisines.
 - Show unrated restaurants as 'No reviews' and place them last in either sort.
 - Use a stable secondary sort (such as title then ID) when ratings are equal.
+- Restaurant cards show image, name, cuisines, location, average rating (or
+  'No reviews') and review count.
+- The detail page lists reviews newest first, each with author name, rating, text
+  and date.
 - Display loading, empty, no-results, validation, and request-failure states.
 - Require confirmation before restaurant deletion.
 - Support keyboard navigation, labeled forms, and readable responsive layouts.
 
-5. PROPOSED DATA MODEL
+5. DATA MODEL AND API
 
-User
-- ID, email, password hash, role, creation timestamp.
-- Display name if reviews identify their author publicly (decision pending).
-
-Restaurant
-- ID, owner user ID, title, preview image reference, location, description,
-  one or more cuisines (Q6), creation and update timestamps.
-- Computed average rating and review count for listing/detail responses.
-
-Review
-- ID, restaurant ID, reviewer user ID, numeric rating, review text,
-  creation and update timestamps.
+See data-model-and-api.txt.
 
 6. OPEN QUESTIONS — PLEASE ADD ANSWERS
 
@@ -105,6 +106,7 @@ Suggested default: One review per reviewer per restaurant, editable/deletable
 by its author. This extends the explicit functional scope and needs agreement.
 Answer: A reviewer can write, edit and delete their own reviews, and can post more than one review for the same restaurant.
 Reviews are published as soon as they are written; there is no approval or moderation step.
+Known limitation: one reviewer can post many reviews and skew a restaurant's average.
 
 Q4. What is the rating scale, and is review text mandatory?
 Suggested default: Integer ratings from 1 to 5; required review text.
@@ -115,7 +117,8 @@ Should filtering use the actual average or its displayed rounded value?
 Suggested default: Minimum threshold against the actual average; display one
 decimal place. Exclude unrated restaurants when a rating filter is active.
 Answer: minimum threshold and range should be supported. The average rating is rounded to 2 decimals;
-that rounded value is shown in the UI and is also used for filtering.
+that rounded value is shown in the UI and is also used for filtering and sorting.
+Min and max can be decimals from 1 to 5 (up to 2 places); both limits are inclusive.
 Restaurants with no reviews are hidden when a rating filter is active.
 
 Q6. Can a restaurant have multiple cuisines? Can users select multiple cuisines
@@ -151,6 +154,7 @@ Answer:
 Q11. Are email verification and password reset required for this submission?
 Suggested default: Exclude from the initial MVP unless explicitly required.
 Answer: Will include email verification and password reset (lower priority; work on it later).
+Users can't sign in until their email is verified.
 
 Q12. Can users change roles or have both roles under one email address?
 Suggested default: One fixed role per account.
@@ -199,7 +203,7 @@ Confirmed-scope checks
 Review checks
 [ ] Only reviewers can create reviews; ratings are integers 1 to 5, text optional.
 [ ] A reviewer can post more than one review for the same restaurant.
-[ ] Review authorship is enforced on the server.
+[ ] New reviews and restaurants take their author/owner from the session, not the request.
 [ ] Review changes update the displayed average, count, filtering, and sorting.
 [ ] Users cannot edit/delete another reviewer's review.
 
