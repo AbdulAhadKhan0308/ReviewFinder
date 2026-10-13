@@ -1,0 +1,214 @@
+RESTAURANT REVIEW PLATFORM — REQUIREMENTS DRAFT
+
+Status: For discussion before implementation.
+This is a product requirements document, not a Python dependency file.
+Confirmed requirements come from the supplied brief. Proposed defaults and
+open questions below require agreement and are not additional committed scope.
+
+1. PURPOSE
+
+Build a simplified restaurant review platform with two account roles:
+- Reviewer: discovers restaurants, reads restaurant details and reviews, and writes reviews.
+- Restaurant owner: manages restaurants that belong to their account.
+
+2. CONFIRMED FUNCTIONAL REQUIREMENTS
+
+Accounts and authentication
+- Users can register with an email address and password.
+- Users choose reviewer or restaurant owner during registration.
+- Registered users can sign in with their email and password.
+
+Reviewer experience
+- Authenticated reviewers can list all restaurants.
+- Each listing shows the restaurant name and relevant summary information.
+- Selecting a restaurant opens its detailed view, preferably a separate route.
+- Users can filter restaurants by cuisine and average rating.
+- Default sorting is average rating from highest to lowest.
+- Users can switch sorting to lowest to highest.
+- Selected filters and sorting persist when users leave and revisit the app.
+
+Owner experience
+- Authenticated owners can list their own restaurants.
+- Owners can create, view, update, and delete their restaurants.
+- Owners cannot update or delete restaurants owned by another account.
+
+Restaurant information
+- Title/name.
+- Preview image.
+- Location.
+- Description.
+- Reviews.
+- Cuisine is also necessary to support the required cuisine filter.
+
+3. CONFIRMED TECHNICAL AND QUALITY REQUIREMENTS
+
+- A web implementation must be a single-page application; a hydrated hybrid
+  framework is acceptable. Fully server-rendered fragment frameworks such as
+  Turbolinks/Hotwire are not acceptable.
+- Handle unexpected scenarios and edge cases.
+- Enforce secure authentication and authorization.
+- Validate input and display understandable validation errors.
+- An optional Material UI boilerplate may be used, modified, or ignored.
+
+4. PROPOSED IMPLEMENTATION DEFAULTS — NOT YET CONFIRMED
+
+- Build a responsive website for desktop and mobile browsers.
+- Use one role per account and keep it fixed after registration for the MVP.
+- Include sign-out and session expiration handling.
+- Enforce roles and ownership on the server for every protected operation.
+  Derive the owner identity from the authenticated session, not submitted data.
+- Store passwords using an established password-hashing implementation.
+- Use secure session handling and protect authentication endpoints against abuse.
+- Validate data on the server as well as in the browser.
+- Treat email addresses case-insensitively for account uniqueness.
+- Persist restaurant, user, and review data in a database.
+- Persist browsing preferences per account in the same browser initially.
+- Use a controlled cuisine list to avoid inconsistent filter values.
+- Show unrated restaurants as 'No reviews' and place them last in either sort.
+- Use a stable secondary sort (such as title then ID) when ratings are equal.
+- Display loading, empty, no-results, validation, and request-failure states.
+- Require confirmation before restaurant deletion.
+- Support keyboard navigation, labeled forms, and readable responsive layouts.
+
+5. PROPOSED DATA MODEL
+
+User
+- ID, email, password hash, role, creation timestamp.
+- Display name if reviews identify their author publicly (decision pending).
+
+Restaurant
+- ID, owner user ID, title, preview image reference, location, description,
+  one or more cuisines (Q6), creation and update timestamps.
+- Computed average rating and review count for listing/detail responses.
+
+Review
+- ID, restaurant ID, reviewer user ID, numeric rating, review text,
+  creation and update timestamps.
+
+6. OPEN QUESTIONS — PLEASE ADD ANSWERS
+
+Priority A: Decide before implementing the core behavior
+
+Q1. Are we building a responsive web app only, or is a native mobile app needed?
+Suggested default: Responsive web app only.
+Answer: Responsive web app only.
+
+Q2. Is there a required or preferred frontend/backend stack and database?
+Is the mentioned Material UI boilerplate available, or should we start fresh?
+Answer: For frontend let's do React + Material UI (for styles), for backend let's do C#/.NET/PostgreSQL.
+Use Tailwind only as a reference point.
+
+Q3. Can reviewers create reviews, or are reviews only displayed from seed data?
+If they can write reviews, can they edit/delete their own reviews, and is there
+one review per reviewer per restaurant or multiple reviews?
+Suggested default: One review per reviewer per restaurant, editable/deletable
+by its author. This extends the explicit functional scope and needs agreement.
+Answer: A reviewer can write, edit and delete their own reviews, and can post more than one review for the same restaurant.
+Reviews are published as soon as they are written; there is no approval or moderation step.
+
+Q4. What is the rating scale, and is review text mandatory?
+Suggested default: Integer ratings from 1 to 5; required review text.
+Answer: Integer ratings from 1 to 5, text is optional
+
+Q5. Does rating filtering mean a minimum threshold, an exact rating, or a range?
+Should filtering use the actual average or its displayed rounded value?
+Suggested default: Minimum threshold against the actual average; display one
+decimal place. Exclude unrated restaurants when a rating filter is active.
+Answer: minimum threshold and range should be supported. The average rating is rounded to 2 decimals;
+that rounded value is shown in the UI and is also used for filtering.
+Restaurants with no reviews are hidden when a rating filter is active.
+
+Q6. Can a restaurant have multiple cuisines? Can users select multiple cuisines
+in the filter, and should matching any selected cuisine be sufficient?
+Suggested default: One cuisine per restaurant and one selected cuisine filter.
+Answer: Yes, restaurants can have multiple cuisines, and users can select multiple cuisines.
+When multiple cuisines are selected, only restaurants that have all the selected cuisines are shown.
+
+Q7. Must users sign in to browse restaurants? Can owners also browse all
+restaurants, and are owners permitted to write reviews?
+Suggested default: Sign-in required; owners manage their own listings and
+reviewers browse all listings. Only reviewers write reviews, if supported.
+Answer: Sign-in is required to browse. Owners manage only their own listings: they can't browse anyone else's restaurants and can't write reviews, including on their own restaurants.
+Reviewers can browse and write reviews on restaurants.
+
+Q8. How should preview images be provided: URL, file upload, or both?
+Suggested default for a small submission: Image URL with a fallback image.
+Answer: File upload only. If no image is uploaded, the app shows a default image.
+Allowed formats: JPG/JPEG, PNG, WebP; maximum size 10 MB.
+
+Q9. What does location contain: free-text address, city, or structured address?
+Are maps or geolocation required?
+Suggested default: Plain-text address; no maps or geolocation.
+Answer: Plain-text address is fine; no maps or geolocation.
+
+Priority B: Confirm scope and edge-case behavior
+
+Q10. Should filters/sorting follow an account across devices, or only persist
+in the same browser? Should preferences be separate for different accounts?
+Suggested default: Same browser, separate preferences per account.
+Answer: 
+
+Q11. Are email verification and password reset required for this submission?
+Suggested default: Exclude from the initial MVP unless explicitly required.
+Answer: Will include email verification and password reset (lower priority; work on it later).
+
+Q12. Can users change roles or have both roles under one email address?
+Suggested default: One fixed role per account.
+Answer:
+
+Q13. When an owner deletes a restaurant, should its reviews also be deleted?
+Is recovery/soft deletion required? May owners remove individual reviews?
+Suggested default: Delete associated reviews with the restaurant; no recovery
+and no owner permission to modify individual reviewer contributions.
+Answer:
+
+Q14. Are the proposed unrated-restaurant and equal-rating sort rules acceptable?
+Answer:
+
+Q15. Is pagination required? Are search by name, admin tools, moderation,
+owner replies, or review photos expected?
+Suggested default: Paginated listing; other listed features outside the MVP.
+Answer:
+
+Q16. Are there branding/design references, a deadline, or submission rules?
+Should delivery include hosting, source code, setup instructions, demo accounts,
+seed data, automated tests, or a recorded demo?
+Answer:
+
+7. ACCEPTANCE CHECKLIST
+
+Confirmed-scope checks
+[ ] A user can register as either supported role and sign in.
+[ ] Invalid registration/sign-in input produces clear errors.
+[ ] A reviewer sees restaurant summaries and can open restaurant details.
+[ ] Cuisine and average-rating filters work individually and together.
+[ ] Selecting several cuisines shows only restaurants that have all of them.
+[ ] Rating filter supports a minimum threshold and a min-max range.
+[ ] With a rating filter on, restaurants with no reviews are hidden.
+[ ] Highest-rated-first is the initial default; either direction can be selected.
+[ ] Selected filters and sort direction survive leaving and returning.
+[ ] An owner can create, view, update, and delete their own restaurants.
+[ ] Image upload accepts only JPG/JPEG, PNG or WebP files up to 10 MB.
+[ ] Restaurants without an uploaded image show the default image.
+[ ] Another owner cannot update/delete those restaurants via direct API calls.
+[ ] Owners cannot view other owners' restaurants or write reviews, even via direct API calls.
+[ ] Unauthenticated users cannot view or change restaurants or reviews, even via direct API calls.
+[ ] Empty lists, failed requests, and missing restaurants are handled gracefully.
+[ ] Web navigation meets the SPA/hydration requirement.
+
+Review checks
+[ ] Only reviewers can create reviews; ratings are integers 1 to 5, text optional.
+[ ] A reviewer can post more than one review for the same restaurant.
+[ ] Review authorship is enforced on the server.
+[ ] Review changes update the displayed average, count, filtering, and sorting.
+[ ] Users cannot edit/delete another reviewer's review.
+
+8. SUGGESTED BUILD ORDER
+
+1. Resolve Priority A questions and agree on MVP scope.
+2. Define database relationships and API request/response contracts.
+3. Implement authentication and server-side role/ownership checks.
+4. Complete one flow: owner registers and creates a restaurant; reviewer sees it.
+5. Add detail views, filters, sorting, and preference persistence.
+6. Add review authoring, then refine UI and failure states.
+7. Verify authorization and key flows; document setup and agreed limitations.
