@@ -79,8 +79,9 @@ Restaurant information
 - The detail page lists reviews newest first, each with author name, rating, text
   and date.
 - Display loading, empty, no-results, validation, and request-failure states.
+- If cookies are blocked, show a message asking the user to enable them for this
+  site, since sign-in needs cookies.
 - Require confirmation before restaurant deletion.
-- Support keyboard navigation, labeled forms, and readable responsive layouts.
 
 5. DATA MODEL AND API
 
