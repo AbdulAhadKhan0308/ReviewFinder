@@ -11,9 +11,13 @@ lengths in requirements.txt section 4.
 users (ASP.NET Core Identity's user table, plus the columns below)
 - Identity columns: id, email, password hash, email confirmed, lockout state.
 - display_name    required
-- role            Reviewer or Owner; fixed after registration (Q12 pending)
+- role            Reviewer or Owner; fixed after registration (Q12)
 - created_at
 - Email is unique regardless of case (Identity's normalized email).
+- Later (Q12): the same email can register once per role, so one email may have a
+  Reviewer account and an Owner account. That means making the email index unique
+  on (normalized email, role) instead. user_name is the account ID, not the email,
+  so Identity's unique-username rule won't block this.
 
 restaurants
 - id
@@ -79,8 +83,10 @@ POST   /api/auth/login                    Anyone
        401 if the credentials are wrong or the account is locked
 POST   /api/auth/logout                   User -> 204
 GET    /api/auth/me                       User -> 200 Me
-Later (Q11): verify email, resend verification email, forgot password,
-reset password.
+Later (Q11), not built yet: verify email, resend verification email, forgot
+password, reset password. Password reset must be built afterwards.
+Later (Q12): when an email has both a Reviewer and an Owner account, login must
+also identify which account to sign in to.
 
 Cuisines
 GET    /api/cuisines                      User -> 200 [ { id, name } ]

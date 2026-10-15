@@ -66,7 +66,8 @@ Restaurant information
   email 254, display name 50 characters. Title, location, description and display
   name are required. Trim input and reject blank-only values.
 - Passwords: 8 to 128 characters, with no forced symbols or digits.
-- Treat email addresses case-insensitively for account uniqueness.
+- Treat email addresses case-insensitively for account uniqueness. Later, one email
+  may hold one reviewer account and one restaurant owner account (see Q12).
 - Persist restaurant, user, and review data in a database.
 - Persist browsing preferences per account in the same browser initially.
 - Use a controlled cuisine list, stored in the database, to avoid inconsistent filter
@@ -156,10 +157,16 @@ Q11. Are email verification and password reset required for this submission?
 Suggested default: Exclude from the initial MVP unless explicitly required.
 Answer: Will include email verification and password reset (lower priority; work on it later).
 Users can't sign in until their email is verified.
+Status: Neither is built yet; the current sign-in sends no emails. Password reset
+must be built afterwards. Until email verification is built, users can sign in
+without verifying their email.
 
 Q12. Can users change roles or have both roles under one email address?
 Suggested default: One fixed role per account.
-Answer:
+Answer: One fixed role per account. Later, the same email address can be used to
+register twice: once as a reviewer and once as a restaurant owner, as two separate
+accounts. Not built yet: for now each email can register only once.
+When built, sign-in will need to know which of the two accounts the user means.
 
 Q13. When an owner deletes a restaurant, should its reviews also be deleted?
 Is recovery/soft deletion required? May owners remove individual reviews?

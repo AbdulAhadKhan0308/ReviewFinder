@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReviews.Api.Data;
@@ -6,9 +7,9 @@ namespace RestaurantReviews.Api.Controllers;
 
 public record CuisineDto(Guid Id, string Name);
 
-// TODO: limit to signed-in users once sign-in exists.
 [ApiController]
 [Route("api/cuisines")]
+[Authorize]
 public class CuisinesController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

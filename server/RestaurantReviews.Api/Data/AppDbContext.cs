@@ -1,13 +1,32 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantReviews.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+// IdentityUserContext adds Identity's user tables without its role tables; each user's role is a column instead.
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUserContext<AppUser, Guid>(options)
 {
     public DbSet<Cuisine> Cuisines => Set<Cuisine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AppUser>(user =>
+        {
+            user.ToTable("users");
+            user.Property(u => u.DisplayName).HasMaxLength(50);
+            user.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
+            // One account per email for now. Allowing one account per email and role later means
+            // replacing this with a unique index on (NormalizedEmail, Role).
+            user.HasIndex(u => u.NormalizedEmail).IsUnique().HasDatabaseName("ix_users_normalized_email");
+            user.HasIndex(u => u.NormalizedUserName).HasDatabaseName("ix_users_normalized_user_name");
+        });
+        modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("user_claims");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("user_logins");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("user_tokens");
+
         // ICU level 2 ignores case but still distinguishes accents.
         modelBuilder.HasCollation("case_insensitive", locale: "und-u-ks-level2", provider: "icu", deterministic: false);
 
