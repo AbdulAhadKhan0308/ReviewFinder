@@ -263,6 +263,76 @@ namespace RestaurantReviews.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestaurantReviews.Api.Data.Restaurant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("image_key");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_restaurants");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_restaurants_owner_id");
+
+                    b.ToTable("restaurants", (string)null);
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.RestaurantCuisine", b =>
+                {
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restaurant_id");
+
+                    b.Property<Guid>("CuisineId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cuisine_id");
+
+                    b.HasKey("RestaurantId", "CuisineId")
+                        .HasName("pk_restaurant_cuisines");
+
+                    b.HasIndex("CuisineId")
+                        .HasDatabaseName("ix_restaurant_cuisines_cuisine_id");
+
+                    b.ToTable("restaurant_cuisines", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("RestaurantReviews.Api.Data.AppUser", null)
@@ -291,6 +361,33 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.Restaurant", b =>
+                {
+                    b.HasOne("RestaurantReviews.Api.Data.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_restaurants_users_owner_id");
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.RestaurantCuisine", b =>
+                {
+                    b.HasOne("RestaurantReviews.Api.Data.Cuisine", null)
+                        .WithMany()
+                        .HasForeignKey("CuisineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_restaurant_cuisines_cuisines_cuisine_id");
+
+                    b.HasOne("RestaurantReviews.Api.Data.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_restaurant_cuisines_restaurants_restaurant_id");
                 });
 #pragma warning restore 612, 618
         }

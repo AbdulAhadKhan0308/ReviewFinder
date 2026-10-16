@@ -27,6 +27,8 @@ export class ApiError extends Error {
   }
 }
 
+export const isNotFound = (err: unknown) => err instanceof ApiError && err.status === 404
+
 let unauthorizedHandler: (() => void) | null = null
 
 // Lets the auth state react when any request reveals the session has ended.

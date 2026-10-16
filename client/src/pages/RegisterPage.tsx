@@ -15,16 +15,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { toFormErrors, type FormErrors } from '../api/formErrors'
 import { roleLabels, useAuth, type Role } from '../auth/AuthContext'
 import { useRedirectTarget } from '../auth/redirect'
-import {
-  limits,
-  toFormErrors,
-  validateDisplayName,
-  validateEmail,
-  validateNewPassword,
-  type FormErrors,
-} from '../auth/validation'
+import { limits, validateDisplayName, validateEmail, validateNewPassword } from '../auth/validation'
 import { AuthPageLayout } from '../components/AuthPageLayout'
 
 const fields = ['email', 'displayName', 'password', 'role'] as const

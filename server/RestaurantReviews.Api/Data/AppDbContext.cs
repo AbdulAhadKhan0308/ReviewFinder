@@ -8,6 +8,7 @@ namespace RestaurantReviews.Api.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUserContext<AppUser, Guid>(options)
 {
     public DbSet<Cuisine> Cuisines => Set<Cuisine>();
+    public DbSet<Restaurant> Restaurants => Set<Restaurant>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
                 new Cuisine { Id = Guid.Parse("38f44788-1dbb-4277-b9d1-2a8d85e7d0ff"), Name = "Indian" },
                 new Cuisine { Id = Guid.Parse("26713e13-c2e3-4e05-8197-834ffcdabcb7"), Name = "Mexican" },
                 new Cuisine { Id = Guid.Parse("2f5be948-bc80-4bd6-b7ed-ede6fc43aa5d"), Name = "Greek" });
+        });
+
+        modelBuilder.Entity<Restaurant>(restaurant =>
+        {
+            restaurant.Property(r => r.Title).HasMaxLength(100);
+            restaurant.Property(r => r.Location).HasMaxLength(200);
+            restaurant.Property(r => r.Description).HasMaxLength(2000);
+            restaurant.Property(r => r.ImageKey).HasMaxLength(100);
+            // Restrict: deleting an account must not silently delete its restaurants.
+            restaurant.HasOne<AppUser>().WithMany().HasForeignKey(r => r.OwnerId).OnDelete(DeleteBehavior.Restrict);
+            restaurant.HasIndex(r => r.OwnerId);
+            restaurant.HasMany(r => r.Cuisines).WithMany().UsingEntity<RestaurantCuisine>(
+                toCuisine => toCuisine.HasOne<Cuisine>().WithMany().HasForeignKey(rc => rc.CuisineId).OnDelete(DeleteBehavior.Restrict),
+                toRestaurant => toRestaurant.HasOne<Restaurant>().WithMany().HasForeignKey(rc => rc.RestaurantId).OnDelete(DeleteBehavior.Cascade),
+                join =>
+                {
+                    join.ToTable("restaurant_cuisines");
+                    join.HasKey(rc => new { rc.RestaurantId, rc.CuisineId });
+                });
         });
     }
 }

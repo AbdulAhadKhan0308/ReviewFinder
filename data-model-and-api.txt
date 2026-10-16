@@ -21,7 +21,7 @@ users (ASP.NET Core Identity's user table, plus the columns below)
 
 restaurants
 - id
-- owner_id        -> users, required
+- owner_id        -> users, required; an account that owns restaurants can't be deleted
 - title, location, description    required
 - image_key       nullable; server-generated name of the uploaded image file
 - created_at, updated_at

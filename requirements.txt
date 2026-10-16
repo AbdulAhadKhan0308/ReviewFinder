@@ -224,3 +224,26 @@ Review checks
 5. Add detail views, filters, sorting, and preference persistence.
 6. Add review authoring, then refine UI and failure states.
 7. Verify authorization and key flows; document setup and agreed limitations.
+
+9. BUILD PROGRESS
+
+Work is built in pieces, each covering server and client together.
+
+[x] 0. Accounts: register, sign in, sign out; session cookie, CSRF protection,
+       account lockout. Every API endpoint requires sign-in unless marked public.
+[x] 1. Owner restaurant management: owners create, view, edit and delete their own
+       restaurants; 1 to 3 cuisines each; delete asks for confirmation.
+[ ] 2. Image upload: upload, replace and remove a restaurant image (JPG/JPEG, PNG,
+       WebP, up to 10 MB); default image when none is uploaded.
+[ ] 3. Reviewer restaurant list: restaurant cards, pagination, cuisine and rating
+       filters, sorting, preferences remembered in the browser. The largest piece;
+       can be split into the list first, then filters and sorting.
+[ ] 4. Restaurant detail and reviews: detail page; reviewers write, edit and delete
+       their own reviews; average rating and review count update.
+[ ] 5. Edge cases and polish: empty, error and not-found states; access checks via
+       direct API calls; mobile layout.
+[ ] 6. Delivery: README with setup steps, demo accounts and sample data, plus
+       whatever Q16 asks for.
+
+Postponed, not part of this submission: password reset, email verification (Q11),
+and registering one email once per role (Q12).

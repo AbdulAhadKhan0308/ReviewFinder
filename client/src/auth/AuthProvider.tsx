@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [cookiesBlocked, setCookiesBlocked] = useState(false)
   const [sessionExpired, setSessionExpired] = useState(false)
+  const [signedOut, setSignedOut] = useState(false)
   // Lets the unauthorized handler see the current user without re-registering on every change.
   const userRef = useRef<User | null>(null)
 
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // CSRF tokens are tied to the signed-in user, so get one for the new session.
       await refreshCsrfToken().catch(() => {})
       setSessionExpired(false)
+      setSignedOut(false)
       applyUser(me)
     },
     [applyUser],
@@ -88,12 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!(err instanceof ApiError && err.status === 401)) throw err
     }
     await refreshCsrfToken().catch(() => {})
+    setSignedOut(true)
     applyUser(null)
   }, [applyUser])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, cookiesBlocked, sessionExpired, login, register, logout }),
-    [user, cookiesBlocked, sessionExpired, login, register, logout],
+    () => ({ user, cookiesBlocked, sessionExpired, signedOut, login, register, logout }),
+    [user, cookiesBlocked, sessionExpired, signedOut, login, register, logout],
   )
 
   if (load.status === 'loading') {

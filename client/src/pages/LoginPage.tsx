@@ -3,7 +3,7 @@ import { Link as RouterLink, Navigate, useLocation } from 'react-router'
 import { Alert, Box, Button, Link, Stack, TextField, Typography } from '@mui/material'
 import { useAuth } from '../auth/AuthContext'
 import { useRedirectTarget } from '../auth/redirect'
-import { toFormErrors, type FormErrors } from '../auth/validation'
+import { toFormErrors, type FormErrors } from '../api/formErrors'
 import { AuthPageLayout } from '../components/AuthPageLayout'
 
 const fields = ['email', 'password'] as const

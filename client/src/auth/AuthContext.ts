@@ -12,6 +12,8 @@ export type AuthContextValue = {
   cookiesBlocked: boolean
   // True when the user was signed out because the server no longer accepted their session.
   sessionExpired: boolean
+  // True after the user chose to sign out, until the next sign-in.
+  signedOut: boolean
   login: (email: string, password: string) => Promise<void>
   register: (input: RegisterInput) => Promise<void>
   logout: () => Promise<void>
