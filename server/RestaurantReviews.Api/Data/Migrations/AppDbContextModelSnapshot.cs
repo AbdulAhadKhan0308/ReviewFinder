@@ -280,11 +280,6 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("description");
 
-                    b.Property<string>("ImageKey")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("image_key");
-
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -331,6 +326,38 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .HasDatabaseName("ix_restaurant_cuisines_cuisine_id");
 
                     b.ToTable("restaurant_cuisines", (string)null);
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.RestaurantImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("content_type");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("data");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restaurant_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_restaurant_images");
+
+                    b.HasIndex("RestaurantId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_restaurant_images_restaurant_id");
+
+                    b.ToTable("restaurant_images", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
@@ -388,6 +415,21 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_restaurant_cuisines_restaurants_restaurant_id");
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.RestaurantImage", b =>
+                {
+                    b.HasOne("RestaurantReviews.Api.Data.Restaurant", null)
+                        .WithOne("Image")
+                        .HasForeignKey("RestaurantReviews.Api.Data.RestaurantImage", "RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_restaurant_images_restaurants_restaurant_id");
+                });
+
+            modelBuilder.Entity("RestaurantReviews.Api.Data.Restaurant", b =>
+                {
+                    b.Navigation("Image");
                 });
 #pragma warning restore 612, 618
         }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReviews.Api.Auth;
 using RestaurantReviews.Api.Data;
+using RestaurantReviews.Api.Images;
 
 namespace RestaurantReviews.Api.Controllers;
 
@@ -26,6 +27,12 @@ public record RestaurantInput
     // Duplicates are dropped, so the 1 to 3 limit counts distinct cuisines.
     [Length(1, 3, ErrorMessage = "Choose 1 to 3 cuisines.")]
     public IReadOnlyList<Guid> CuisineIds { get; init => field = value?.Distinct().ToList() ?? []; } = [];
+
+    // Base64 of a JPG, PNG or WebP file. Left out to keep the current image, if any.
+    public string? Image { get; init; }
+
+    // Removes the current image when no new one is sent.
+    public bool RemoveImage { get; init; }
 }
 
 public record RestaurantSummary(
@@ -56,11 +63,14 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
 {
     private const string OwnerRole = nameof(UserRole.Owner);
 
-    // Image URLs, average rating and review count are placeholders until image upload and reviews exist.
+    // A 5 MB image is about 7 MB as base64, plus the other fields.
+    private const long MaxSaveRequestBytes = 8 * 1024 * 1024;
+
+    // Average rating and review count are placeholders until reviews exist.
     private static readonly Expression<Func<Restaurant, RestaurantSummary>> ToSummary = r => new RestaurantSummary(
         r.Id,
         r.Title,
-        null,
+        ImageUrl(r.Id, r.Image == null ? (Guid?)null : r.Image.Id),
         r.Location,
         r.Cuisines.OrderBy(c => c.Name).Select(c => new CuisineDto(c.Id, c.Name)).ToList(),
         null,
@@ -69,7 +79,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
     private static readonly Expression<Func<Restaurant, RestaurantDetail>> ToDetail = r => new RestaurantDetail(
         r.Id,
         r.Title,
-        null,
+        ImageUrl(r.Id, r.Image == null ? (Guid?)null : r.Image.Id),
         r.Location,
         r.Cuisines.OrderBy(c => c.Name).Select(c => new CuisineDto(c.Id, c.Name)).ToList(),
         null,
@@ -108,14 +118,38 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         return detail is null ? NotFound() : detail;
     }
 
+    // The URL's v parameter is ignored; it changes whenever the image does, so browsers fetch the new one.
+    [HttpGet("{id:guid}/image")]
+    public async Task<IActionResult> GetImage(Guid id, CancellationToken cancellationToken)
+    {
+        var image = await VisibleRestaurants()
+            .Where(r => r.Id == id)
+            .Select(r => r.Image)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "private, max-age=31536000, immutable";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        return File(image.Data, image.ContentType);
+    }
+
     [HttpPost]
     [Authorize(Roles = OwnerRole)]
+    [RequestSizeLimit(MaxSaveRequestBytes)]
     public async Task<ActionResult<RestaurantDetail>> Create(RestaurantInput input, CancellationToken cancellationToken)
     {
         var cuisines = await FindCuisines(input.CuisineIds, cancellationToken);
         if (cuisines is null)
         {
             return UnknownCuisines();
+        }
+
+        if (!TryReadImage(input.Image, out var image))
+        {
+            return ValidationProblem(ModelState);
         }
 
         var now = DateTime.UtcNow;
@@ -126,6 +160,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
             Title = input.Title,
             Location = input.Location,
             Description = input.Description,
+            Image = image,
             Cuisines = cuisines,
             CreatedAt = now,
             UpdatedAt = now,
@@ -143,6 +178,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = OwnerRole)]
+    [RequestSizeLimit(MaxSaveRequestBytes)]
     public async Task<ActionResult<RestaurantDetail>> Update(Guid id, RestaurantInput input, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -160,6 +196,24 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
             return UnknownCuisines();
         }
 
+        if (!TryReadImage(input.Image, out var image))
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        // One transaction, so the old image is only deleted if the whole update is saved.
+        await using var transaction = await db.Database.BeginTransactionAsync(CancellationToken.None);
+        if (image is not null || input.RemoveImage)
+        {
+            await db.RestaurantImages.Where(i => i.RestaurantId == id).ExecuteDeleteAsync(CancellationToken.None);
+        }
+
+        if (image is not null)
+        {
+            image.RestaurantId = id;
+            db.RestaurantImages.Add(image);
+        }
+
         restaurant.Title = input.Title;
         restaurant.Location = input.Location;
         restaurant.Description = input.Description;
@@ -167,6 +221,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         restaurant.Cuisines.AddRange(cuisines);
         restaurant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(CancellationToken.None);
+        await transaction.CommitAsync(CancellationToken.None);
 
         return await db.Restaurants.AsNoTracking()
             .Where(r => r.Id == id)
@@ -179,7 +234,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = User.GetUserId();
-        // The database removes the restaurant's cuisine links along with it (ON DELETE CASCADE).
+        // The database removes the restaurant's cuisine links and image along with it (ON DELETE CASCADE).
         var deleted = await db.Restaurants
             .Where(r => r.Id == id && r.OwnerId == userId)
             .ExecuteDeleteAsync();
@@ -212,4 +267,26 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         ModelState.AddModelError("cuisineIds", "One or more of the selected cuisines no longer exist. Refresh the page and try again.");
         return ValidationProblem(ModelState);
     }
+
+    // Decodes the uploaded image, if one was sent. Adds a validation error if it isn't a usable image.
+    private bool TryReadImage(string? base64, out RestaurantImage? image)
+    {
+        image = null;
+        if (base64 is null)
+        {
+            return true;
+        }
+
+        if (!ImageFile.TryDecode(base64, out var file, out var error))
+        {
+            ModelState.AddModelError("image", error);
+            return false;
+        }
+
+        image = new RestaurantImage { Id = Guid.CreateVersion7(), ContentType = file.ContentType, Data = file.Bytes };
+        return true;
+    }
+
+    private static string? ImageUrl(Guid restaurantId, Guid? imageId) =>
+        imageId is null ? null : $"/api/restaurants/{restaurantId}/image?v={imageId}";
 }

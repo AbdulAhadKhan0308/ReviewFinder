@@ -139,7 +139,9 @@ Reviewers can browse and write reviews on restaurants.
 Q8. How should preview images be provided: URL, file upload, or both?
 Suggested default for a small submission: Image URL with a fallback image.
 Answer: File upload only. If no image is uploaded, the app shows a default image.
-Allowed formats: JPG/JPEG, PNG, WebP; maximum size 10 MB.
+Allowed formats: JPG/JPEG, PNG, WebP; maximum size 5 MB.
+Owners add, change or remove the image on both the create and edit forms; it's
+saved together with the rest of the form.
 
 Q9. What does location contain: free-text address, city, or structured address?
 Are maps or geolocation required?
@@ -200,7 +202,7 @@ Confirmed-scope checks
 [ ] Highest-rated-first is the initial default; either direction can be selected.
 [ ] Selected filters and sort direction survive leaving and returning.
 [ ] An owner can create, view, update, and delete their own restaurants.
-[ ] Image upload accepts only JPG/JPEG, PNG or WebP files up to 10 MB.
+[ ] Image upload accepts only JPG/JPEG, PNG or WebP files up to 5 MB.
 [ ] Restaurants without an uploaded image show the default image.
 [ ] Another owner cannot update/delete those restaurants via direct API calls.
 [ ] Owners cannot view other owners' restaurants or write reviews, even via direct API calls.
@@ -233,8 +235,9 @@ Work is built in pieces, each covering server and client together.
        account lockout. Every API endpoint requires sign-in unless marked public.
 [x] 1. Owner restaurant management: owners create, view, edit and delete their own
        restaurants; 1 to 3 cuisines each; delete asks for confirmation.
-[ ] 2. Image upload: upload, replace and remove a restaurant image (JPG/JPEG, PNG,
-       WebP, up to 10 MB); default image when none is uploaded.
+[x] 2. Image upload: add, replace and remove a restaurant image (JPG/JPEG, PNG,
+       WebP, up to 5 MB) on the create and edit forms, saved with the form;
+       default image when none is uploaded.
 [ ] 3. Reviewer restaurant list: restaurant cards, pagination, cuisine and rating
        filters, sorting, preferences remembered in the browser. The largest piece;
        can be split into the list first, then filters and sorting.

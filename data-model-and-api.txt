@@ -23,9 +23,15 @@ restaurants
 - id
 - owner_id        -> users, required; an account that owns restaurants can't be deleted
 - title, location, description    required
-- image_key       nullable; server-generated name of the uploaded image file
 - created_at, updated_at
 - Index on owner_id.
+
+restaurant_images (at most one per restaurant)
+- id              new for each uploaded image; used in the image URL
+- restaurant_id   -> restaurants, unique, deleted with the restaurant
+- content_type    image/jpeg, image/png or image/webp
+- data            the image bytes (bytea)
+- Kept apart from restaurants so loading a restaurant doesn't load its image.
 
 cuisines
 - id, name (unique)
@@ -106,9 +112,6 @@ PUT    /api/restaurants/{id}              Restaurant owner (own only)
        RestaurantInput -> 200 RestaurantDetail
 DELETE /api/restaurants/{id}              Restaurant owner (own only)
        -> 204; also deletes its reviews and image
-PUT    /api/restaurants/{id}/image        Restaurant owner (own only)
-       multipart/form-data field "file" -> 200 { imageUrl }
-DELETE /api/restaurants/{id}/image        Restaurant owner (own only) -> 204
 GET    /api/restaurants/{id}/image        Reviewer, or Restaurant owner (own only)
        -> image file
 
@@ -133,7 +136,8 @@ DELETE /api/reviews/{id}                  Reviewer who authored -> 204
 5. REQUEST AND RESPONSE SHAPES
 
 Me                { id, email, displayName, role }
-RestaurantInput   { title, location, description, cuisineIds (1 to 3) }
+RestaurantInput   { title, location, description, cuisineIds (1 to 3), image,
+                    removeImage }
 RestaurantSummary { id, title, imageUrl, location, cuisines [ { id, name } ],
                     averageRating, reviewCount }
 RestaurantDetail  RestaurantSummary + { description, createdAt, updatedAt }
@@ -141,15 +145,20 @@ ReviewInput       { rating, text (optional) }
 Review            { id, rating, text, authorDisplayName, createdAt, updatedAt,
                     isMine }
 - imageUrl is null when there's no image; the app then shows the default image.
+- image is optional: base64 of a JPG, PNG or WebP file, without a "data:" prefix.
+  Leave it out to keep the current image, if any. Set removeImage to true to
+  remove it.
 - averageRating is null when there are no reviews; the app shows "No reviews".
 - isMine only decides whether edit/delete buttons show; the server still checks.
 
 6. IMAGE UPLOADS
 
-- JPG/JPEG, PNG or WebP, up to 10 MB. Check the file's actual content, not just
+- JPG/JPEG, PNG or WebP, up to 5 MB. Check the file's actual content, not just
   its name or declared type.
-- Save it under a server-generated name; never build a path from the uploaded name.
-- Replacing or deleting the image, or deleting the restaurant, removes the old file.
-- imageUrl ends with ?v=<image_key>, so the URL changes whenever the image does and
+- The image is sent as base64 inside the create and edit requests, so it's saved
+  together with the rest of the form in one request. Those two endpoints accept
+  bodies up to 8 MB (a 5 MB file is about 7 MB as base64).
+- Images are stored in PostgreSQL (restaurant_images), so an image is saved and
+  deleted together with its restaurant, and there's nothing else to back up.
+- imageUrl ends with ?v=<image id>, so the URL changes whenever the image does and
   browsers load the new image instead of a cached old one. The server ignores v.
-- When deployed, store files somewhere persistent (for example Azure Blob Storage).

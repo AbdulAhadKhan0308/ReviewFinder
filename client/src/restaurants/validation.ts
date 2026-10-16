@@ -3,8 +3,9 @@ import type { RestaurantInput } from '../api/restaurants'
 
 // These mirror the server's limits so most mistakes are caught before a request is sent.
 export const restaurantLimits = { title: 100, location: 200, description: 2000, minCuisines: 1, maxCuisines: 3 }
+export const imageLimits = { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
 
-export const restaurantFields = ['title', 'location', 'description', 'cuisineIds'] as const
+export const restaurantFields = ['title', 'location', 'description', 'cuisineIds', 'image'] as const
 export type RestaurantField = (typeof restaurantFields)[number]
 
 // Same messages as the server.
@@ -37,4 +38,11 @@ export function validateRestaurant(input: RestaurantInput): FormErrors<Restauran
         ? `Choose ${minCuisines} to ${maxCuisines} cuisines.`
         : undefined,
   }
+}
+
+// Checked as soon as a file is chosen. The server also checks the file's actual content.
+export function validateImageFile(file: File) {
+  if (!imageLimits.types.includes(file.type)) return 'Image must be a JPG, PNG or WebP file.'
+  if (file.size > imageLimits.maxBytes) return 'Image must be 5 MB or smaller.'
+  return undefined
 }

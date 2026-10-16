@@ -26,6 +26,10 @@ export type RestaurantInput = {
   location: string
   description: string
   cuisineIds: string[]
+  // Base64 of a newly chosen image; left out to keep the current image, if any.
+  image?: string
+  // Removes the current image when no new one is sent.
+  removeImage?: boolean
 }
 
 export const restaurantPath = (id: string) => `/api/restaurants/${encodeURIComponent(id)}`
