@@ -66,15 +66,15 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
     // A 5 MB image is about 7 MB as base64, plus the other fields.
     private const long MaxSaveRequestBytes = 8 * 1024 * 1024;
 
-    // Average rating and review count are placeholders until reviews exist.
+    // The average is rounded in the database (ROUND(AVG(rating), 2)), so display, filtering and sorting all use one value.
     private static readonly Expression<Func<Restaurant, RestaurantSummary>> ToSummary = r => new RestaurantSummary(
         r.Id,
         r.Title,
         ImageUrl(r.Id, r.Image == null ? (Guid?)null : r.Image.Id),
         r.Location,
         r.Cuisines.OrderBy(c => c.Name).Select(c => new CuisineDto(c.Id, c.Name)).ToList(),
-        null,
-        0);
+        r.Reviews.Any() ? Math.Round(r.Reviews.Average(v => (decimal)v.Rating), 2) : null,
+        r.Reviews.Count);
 
     private static readonly Expression<Func<Restaurant, RestaurantDetail>> ToDetail = r => new RestaurantDetail(
         r.Id,
@@ -82,8 +82,8 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         ImageUrl(r.Id, r.Image == null ? (Guid?)null : r.Image.Id),
         r.Location,
         r.Cuisines.OrderBy(c => c.Name).Select(c => new CuisineDto(c.Id, c.Name)).ToList(),
-        null,
-        0,
+        r.Reviews.Any() ? Math.Round(r.Reviews.Average(v => (decimal)v.Rating), 2) : null,
+        r.Reviews.Count,
         r.Description,
         r.CreatedAt,
         r.UpdatedAt);
@@ -234,7 +234,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = User.GetUserId();
-        // The database removes the restaurant's cuisine links and image along with it (ON DELETE CASCADE).
+        // The database removes the restaurant's cuisine links, image and reviews along with it (ON DELETE CASCADE).
         var deleted = await db.Restaurants
             .Where(r => r.Id == id && r.OwnerId == userId)
             .ExecuteDeleteAsync();
@@ -242,18 +242,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         return deleted == 0 ? NotFound() : NoContent();
     }
 
-    // Reviewers can see every restaurant; owners only see their own. Anything else is reported as not found.
-    private IQueryable<Restaurant> VisibleRestaurants()
-    {
-        var restaurants = db.Restaurants.AsNoTracking();
-        if (User.IsInRole(OwnerRole))
-        {
-            var userId = User.GetUserId();
-            restaurants = restaurants.Where(r => r.OwnerId == userId);
-        }
-
-        return restaurants;
-    }
+    private IQueryable<Restaurant> VisibleRestaurants() => db.Restaurants.AsNoTracking().VisibleTo(User);
 
     // Returns null if any of the IDs isn't a known cuisine.
     private async Task<List<Cuisine>?> FindCuisines(IReadOnlyList<Guid> ids, CancellationToken cancellationToken)

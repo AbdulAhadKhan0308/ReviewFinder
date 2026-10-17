@@ -11,6 +11,7 @@ public class Restaurant
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<Cuisine> Cuisines { get; set; } = [];
+    public List<Review> Reviews { get; set; } = [];
 }
 
 // Kept in its own table so loading a restaurant doesn't also load its image.

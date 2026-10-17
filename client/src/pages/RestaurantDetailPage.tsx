@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   Stack,
   Typography,
 } from '@mui/material'
@@ -24,6 +25,7 @@ import { useAuth } from '../auth/AuthContext'
 import { CuisineChips } from '../components/CuisineChips'
 import { LoadError } from '../components/LoadError'
 import { RestaurantNotFound } from '../components/RestaurantNotFound'
+import { ReviewsSection } from '../components/reviews/ReviewsSection'
 import { defaultRestaurantImage, formatDate, formatRating } from '../restaurants/format'
 
 export default function RestaurantDetailPage() {
@@ -51,12 +53,20 @@ export default function RestaurantDetailPage() {
         <LoadError message="Couldn't load the restaurant." error={query.error} onRetry={query.reload} />
       )}
 
-      {query.status === 'success' && <RestaurantDetails restaurant={query.data} isOwner={isOwner} />}
+      {query.status === 'success' && (
+        <RestaurantDetails restaurant={query.data} isOwner={isOwner} onReviewsChanged={query.refresh} />
+      )}
     </>
   )
 }
 
-function RestaurantDetails({ restaurant, isOwner }: { restaurant: RestaurantDetail; isOwner: boolean }) {
+type DetailsProps = {
+  restaurant: RestaurantDetail
+  isOwner: boolean
+  onReviewsChanged: () => void
+}
+
+function RestaurantDetails({ restaurant, isOwner, onReviewsChanged }: DetailsProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   return (
@@ -112,6 +122,10 @@ function RestaurantDetails({ restaurant, isOwner }: { restaurant: RestaurantDeta
         Added {formatDate(restaurant.createdAt)}
         {restaurant.updatedAt !== restaurant.createdAt && ` · Updated ${formatDate(restaurant.updatedAt)}`}
       </Typography>
+
+      <Divider />
+      {/* Owners can't write reviews, including on their own restaurants. */}
+      <ReviewsSection key={restaurant.id} restaurant={restaurant} canWrite={!isOwner} onChanged={onReviewsChanged} />
 
       {confirmingDelete && <DeleteDialog restaurant={restaurant} onClose={() => setConfirmingDelete(false)} />}
     </Stack>

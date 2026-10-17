@@ -360,6 +360,54 @@ namespace RestaurantReviews.Api.Data.Migrations
                     b.ToTable("restaurant_images", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantReviews.Api.Data.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<short>("Rating")
+                        .HasColumnType("smallint")
+                        .HasColumnName("rating");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restaurant_id");
+
+                    b.Property<Guid>("ReviewerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewer_id");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reviews");
+
+                    b.HasIndex("ReviewerId")
+                        .HasDatabaseName("ix_reviews_reviewer_id");
+
+                    b.HasIndex("RestaurantId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_reviews_restaurant_id_created_at");
+
+                    b.ToTable("reviews", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reviews_rating", "rating BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("RestaurantReviews.Api.Data.AppUser", null)
@@ -427,9 +475,30 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .HasConstraintName("fk_restaurant_images_restaurants_restaurant_id");
                 });
 
+            modelBuilder.Entity("RestaurantReviews.Api.Data.Review", b =>
+                {
+                    b.HasOne("RestaurantReviews.Api.Data.Restaurant", null)
+                        .WithMany("Reviews")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reviews_restaurants_restaurant_id");
+
+                    b.HasOne("RestaurantReviews.Api.Data.AppUser", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_reviews_users_reviewer_id");
+
+                    b.Navigation("Reviewer");
+                });
+
             modelBuilder.Entity("RestaurantReviews.Api.Data.Restaurant", b =>
                 {
                     b.Navigation("Image");
+
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

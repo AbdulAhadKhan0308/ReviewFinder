@@ -45,10 +45,10 @@ restaurant_cuisines
 
 reviews
 - id
-- restaurant_id   -> restaurants, deleted with the restaurant (Q13 pending)
+- restaurant_id   -> restaurants, deleted with the restaurant (Q13)
 - reviewer_id     -> users
 - rating          smallint, CHECK between 1 and 5
-- text            nullable
+- text            nullable; up to 2,000 characters, trimmed, blank stored as null
 - created_at, updated_at
 - Index on (restaurant_id, created_at DESC).
 
@@ -71,7 +71,8 @@ Average rating
   403  wrong role, or the user can see the item but isn't allowed to change it
   404  doesn't exist, or the user isn't allowed to see it
 - Lists are paginated: ?page=1&pageSize=12 (pageSize up to 50). Responses look
-  like { items, page, pageSize, totalCount } (Q15 pending).
+  like { items, page, pageSize, totalCount }, where totalCount counts the items
+  matching the current filters (Q15).
 
 3. ENDPOINTS
 
@@ -102,7 +103,7 @@ GET    /api/restaurants                   Reviewer
        Filters and sorting in section 4
        -> 200 OK with one page of RestaurantSummary items
 GET    /api/me/restaurants                Restaurant owner
-       Own restaurants, newest first
+       Own restaurants, newest first; no filters or sorting options
        -> 200 OK with one page of RestaurantSummary items
 GET    /api/restaurants/{id}              Reviewer, or Restaurant owner (own only)
        -> 200 RestaurantDetail
@@ -117,21 +118,49 @@ GET    /api/restaurants/{id}/image        Reviewer, or Restaurant owner (own onl
 
 Reviews
 GET    /api/restaurants/{id}/reviews      Reviewer, or Restaurant owner (own only)
-       Newest first -> 200 OK with one page of Review items
+       Filters and sorting in section 4; newest first by default
+       -> 200 OK with one page of Review items
 POST   /api/restaurants/{id}/reviews      Reviewer
        ReviewInput -> 201 Review
 PUT    /api/reviews/{id}                  Reviewer who authored
        ReviewInput -> 200 Review
 DELETE /api/reviews/{id}                  Reviewer who authored -> 204
 
-4. RESTAURANT LIST FILTERS AND SORTING (GET /api/restaurants)
+4. LIST FILTERS AND SORTING
 
+Keyword filters ignore case and match anywhere in the text ("piz" finds "Pizza").
+Leading and trailing spaces are ignored; an empty keyword means no filter.
+
+Restaurants (GET /api/restaurants)
+- keyword: up to 100 characters; matches the title, location or description.
 - cuisineIds: repeatable; returns only restaurants that have all of them.
 - minRating, maxRating: decimals from 1 to 5 (up to 2 places), both inclusive;
   min can't be greater than max. If either is set, unrated restaurants are hidden.
 - sort: ratingDesc (default) or ratingAsc. Unrated restaurants come last in both;
-  equal ratings are ordered by title, then ID (Q14 pending).
-- Saved filter and sort preferences live in the browser, per account (Q10 pending).
+  equal ratings are ordered by title, then ID (Q14).
+- Page size 12.
+- The app remembers the keyword, cuisines, rating range and sort in the browser,
+  separately per account, and restores them when the reviewer returns (Q10).
+  The page number isn't remembered, and goes back to 1 when a filter changes.
+
+Reviews (GET /api/restaurants/{id}/reviews)
+- keyword: up to 100 characters; matches the review text. Reviews without text
+  never match a keyword.
+- minRating, maxRating: whole numbers from 1 to 5, both inclusive; min can't be
+  greater than max.
+- writtenFrom, writtenTo: ISO 8601 date-times compared with created_at; from is
+  inclusive, to is exclusive, and from must be earlier than to. The app lets users
+  pick dates and sends the start of each day in their time zone, using the day
+  after the chosen end date as writtenTo, so the chosen end date is included.
+- sort: newest (default), oldest, ratingDesc or ratingAsc. Date sorts use
+  created_at; equal ratings are ordered newest first; ties are broken by ID.
+- Page size 10.
+- Filters and sort aren't remembered: each restaurant's reviews start unfiltered.
+  While on the page they're kept in the URL, so refresh, Back and shared links
+  keep them.
+- The restaurant's averageRating and reviewCount always cover all its reviews;
+  the list's totalCount covers only the reviews matching the filters, so the app
+  can show "Showing 3 of 12 reviews".
 
 5. REQUEST AND RESPONSE SHAPES
 

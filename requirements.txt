@@ -153,7 +153,7 @@ Priority B: Confirm scope and edge-case behavior
 Q10. Should filters/sorting follow an account across devices, or only persist
 in the same browser? Should preferences be separate for different accounts?
 Suggested default: Same browser, separate preferences per account.
-Answer: 
+Answer: Same browser, separate preferences per account.
 
 Q11. Are email verification and password reset required for this submission?
 Suggested default: Exclude from the initial MVP unless explicitly required.
@@ -174,15 +174,22 @@ Q13. When an owner deletes a restaurant, should its reviews also be deleted?
 Is recovery/soft deletion required? May owners remove individual reviews?
 Suggested default: Delete associated reviews with the restaurant; no recovery
 and no owner permission to modify individual reviewer contributions.
-Answer:
+Answer: Deleting a restaurant also deletes its reviews, with no recovery. Owners
+can't edit or delete individual reviews.
 
 Q14. Are the proposed unrated-restaurant and equal-rating sort rules acceptable?
-Answer:
+Answer: Yes. Unrated restaurants come last in both sort orders; equal ratings are
+ordered by title, then ID.
 
 Q15. Is pagination required? Are search by name, admin tools, moderation,
 owner replies, or review photos expected?
 Suggested default: Paginated listing; other listed features outside the MVP.
-Answer:
+Answer: All lists are paginated. Keyword search is included for the reviewers'
+restaurant list (title, location and description) and for reviews (review text).
+Reviews can also be filtered by rating range and date range, and sorted by rating
+or date (see data-model-and-api.txt section 4). Owners' own-restaurant list has no
+filters or sorting. Admin tools, moderation, owner replies and review photos are
+out of scope.
 
 Q16. Are there branding/design references, a deadline, or submission rules?
 Should delivery include hosting, source code, setup instructions, demo accounts,
@@ -196,6 +203,7 @@ Confirmed-scope checks
 [ ] Invalid registration/sign-in input produces clear errors.
 [ ] A reviewer sees restaurant summaries and can open restaurant details.
 [ ] Cuisine and average-rating filters work individually and together.
+[ ] Keyword search finds restaurants by title, location or description.
 [ ] Selecting several cuisines shows only restaurants that have all of them.
 [ ] Rating filter supports a minimum threshold and a min-max range.
 [ ] With a rating filter on, restaurants with no reviews are hidden.
@@ -216,6 +224,12 @@ Review checks
 [ ] New reviews and restaurants take their author/owner from the session, not the request.
 [ ] Review changes update the displayed average, count, filtering, and sorting.
 [ ] Users cannot edit/delete another reviewer's review.
+[ ] Reviews can be filtered by keyword, rating range and date range, and sorted by
+    rating or date in either direction; reviewers and owners both can do this.
+[ ] A restaurant's average rating and review count cover all its reviews, whatever
+    review filters are applied.
+[ ] Review filters start cleared on each restaurant; restaurant list filters and
+    sort are remembered.
 
 8. SUGGESTED BUILD ORDER
 
@@ -238,11 +252,12 @@ Work is built in pieces, each covering server and client together.
 [x] 2. Image upload: add, replace and remove a restaurant image (JPG/JPEG, PNG,
        WebP, up to 5 MB) on the create and edit forms, saved with the form;
        default image when none is uploaded.
-[ ] 3. Reviewer restaurant list: restaurant cards, pagination, cuisine and rating
-       filters, sorting, preferences remembered in the browser. The largest piece;
-       can be split into the list first, then filters and sorting.
-[ ] 4. Restaurant detail and reviews: detail page; reviewers write, edit and delete
-       their own reviews; average rating and review count update.
+[ ] 3. Reviewer restaurant list: restaurant cards, pagination, keyword, cuisine and
+       rating filters, sorting by rating, filters and sort remembered in the
+       browser. Built next, now that ratings exist.
+[x] 4. Reviews: reviewers write, edit and delete their own reviews; reviews listed
+       on the restaurant page with keyword, rating and date filters, sorting by
+       rating or date, and pagination; average rating and review count update.
 [ ] 5. Edge cases and polish: empty, error and not-found states; access checks via
        direct API calls; mobile layout.
 [ ] 6. Delivery: README with setup steps, demo accounts and sample data, plus

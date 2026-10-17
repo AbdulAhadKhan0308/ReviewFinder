@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
     public DbSet<Cuisine> Cuisines => Set<Cuisine>();
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
     public DbSet<RestaurantImage> RestaurantImages => Set<RestaurantImage>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,5 +67,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
         });
 
         modelBuilder.Entity<RestaurantImage>().Property(i => i.ContentType).HasMaxLength(20);
+
+        modelBuilder.Entity<Review>(review =>
+        {
+            review.ToTable(t => t.HasCheckConstraint("ck_reviews_rating", "rating BETWEEN 1 AND 5"));
+            review.Property(r => r.Text).HasMaxLength(2000);
+            // A restaurant's reviews are deleted with it (Q13).
+            review.HasOne<Restaurant>().WithMany(r => r.Reviews).HasForeignKey(r => r.RestaurantId).OnDelete(DeleteBehavior.Cascade);
+            // Restrict: deleting an account must not silently delete its reviews.
+            review.HasOne(r => r.Reviewer).WithMany().HasForeignKey(r => r.ReviewerId).OnDelete(DeleteBehavior.Restrict);
+            // Serves the default newest-first listing of a restaurant's reviews.
+            review.HasIndex(r => new { r.RestaurantId, r.CreatedAt }).IsDescending(false, true);
+        });
     }
 }

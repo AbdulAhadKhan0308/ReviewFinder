@@ -2,19 +2,13 @@ import { useEffect } from 'react'
 import { Link as RouterLink, useSearchParams } from 'react-router'
 import { Box, Button, CircularProgress, Pagination, Paper, Stack, Typography } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import { readPage } from '../api/paging'
 import { myRestaurantsPath, type Page, type RestaurantSummary } from '../api/restaurants'
 import { useApiQuery } from '../api/useApiQuery'
 import { LoadError } from '../components/LoadError'
 import { RestaurantCard } from '../components/RestaurantCard'
 
 const pageSize = 12
-// Matches the server's upper limit for the page number.
-const maxPage = 100_000
-
-function readPage(value: string | null) {
-  const page = Number(value)
-  return Number.isInteger(page) && page >= 1 && page <= maxPage ? page : 1
-}
 
 export default function MyRestaurantsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
