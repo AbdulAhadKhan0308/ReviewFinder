@@ -62,6 +62,7 @@ public record RestaurantDetail(
 public class RestaurantsController(AppDbContext db) : ControllerBase
 {
     private const string OwnerRole = nameof(UserRole.Owner);
+    private const string ReviewerRole = nameof(UserRole.Reviewer);
 
     // A 5 MB image is about 7 MB as base64, plus the other fields.
     private const long MaxSaveRequestBytes = 8 * 1024 * 1024;
@@ -87,6 +88,64 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         r.Description,
         r.CreatedAt,
         r.UpdatedAt);
+
+    [HttpGet]
+    [Authorize(Roles = ReviewerRole)]
+    public async Task<PagedResult<RestaurantSummary>> GetAll(
+        [FromQuery] RestaurantListQuery query,
+        [FromQuery] PageRequest paging,
+        CancellationToken cancellationToken)
+    {
+        var restaurants = db.Restaurants.AsNoTracking();
+        if (query.Keyword is not null)
+        {
+            var pattern = RestaurantQueries.ContainsPattern(query.Keyword);
+            restaurants = restaurants.Where(r =>
+                EF.Functions.ILike(r.Title, pattern, @"\")
+                || EF.Functions.ILike(r.Location, pattern, @"\")
+                || EF.Functions.ILike(r.Description, pattern, @"\"));
+        }
+
+        foreach (var cuisineId in query.CuisineIds.Distinct())
+        {
+            restaurants = restaurants.Where(r => r.Cuisines.Any(c => c.Id == cuisineId));
+        }
+
+        // The same rounded average as in the response, so filtering and sorting match what's displayed.
+        var rated = restaurants.Select(r => new
+        {
+            Restaurant = r,
+            Rating = r.Reviews.Any() ? Math.Round(r.Reviews.Average(v => (decimal)v.Rating), 2) : (decimal?)null,
+        });
+
+        // A rating filter hides unrated restaurants, since their rating is null.
+        if (query.MinRating is { } minRating)
+        {
+            rated = rated.Where(x => x.Rating >= minRating);
+        }
+
+        if (query.MaxRating is { } maxRating)
+        {
+            rated = rated.Where(x => x.Rating <= maxRating);
+        }
+
+        // Unrated restaurants come last in both directions; equal ratings are ordered by title, then ID.
+        var ordered = query.Sort == RestaurantListQuery.RatingAsc
+            ? rated.OrderBy(x => x.Rating == null).ThenBy(x => x.Rating)
+            : rated.OrderBy(x => x.Rating == null).ThenByDescending(x => x.Rating);
+
+        var totalCount = await rated.CountAsync(cancellationToken);
+        var items = await ordered
+            .ThenBy(x => x.Restaurant.Title)
+            .ThenBy(x => x.Restaurant.Id)
+            .Skip(paging.Skip)
+            .Take(paging.PageSize)
+            .Select(x => x.Restaurant)
+            .Select(ToSummary)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<RestaurantSummary>(items, paging.Page, paging.PageSize, totalCount);
+    }
 
     [HttpGet("/api/me/restaurants")]
     [Authorize(Roles = OwnerRole)]

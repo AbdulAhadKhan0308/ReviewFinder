@@ -252,9 +252,9 @@ Work is built in pieces, each covering server and client together.
 [x] 2. Image upload: add, replace and remove a restaurant image (JPG/JPEG, PNG,
        WebP, up to 5 MB) on the create and edit forms, saved with the form;
        default image when none is uploaded.
-[ ] 3. Reviewer restaurant list: restaurant cards, pagination, keyword, cuisine and
+[x] 3. Reviewer restaurant list: restaurant cards, pagination, keyword, cuisine and
        rating filters, sorting by rating, filters and sort remembered in the
-       browser. Built next, now that ratings exist.
+       browser.
 [x] 4. Reviews: reviewers write, edit and delete their own reviews; reviews listed
        on the restaurant page with keyword, rating and date filters, sorting by
        rating or date, and pagination; average rating and review count update.

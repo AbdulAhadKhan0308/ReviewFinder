@@ -6,7 +6,7 @@ import { readPage } from '../api/paging'
 import { myRestaurantsPath, type Page, type RestaurantSummary } from '../api/restaurants'
 import { useApiQuery } from '../api/useApiQuery'
 import { LoadError } from '../components/LoadError'
-import { RestaurantCard } from '../components/RestaurantCard'
+import { RestaurantGrid } from '../components/restaurants/RestaurantGrid'
 
 const pageSize = 12
 
@@ -63,23 +63,7 @@ export default function MyRestaurantsPage() {
 
       {query.status === 'success' && query.data.items.length > 0 && (
         <>
-          <Box
-            component="ul"
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-              gap: 2,
-              m: 0,
-              p: 0,
-              listStyle: 'none',
-            }}
-          >
-            {query.data.items.map((restaurant) => (
-              <li key={restaurant.id}>
-                <RestaurantCard restaurant={restaurant} />
-              </li>
-            ))}
-          </Box>
+          <RestaurantGrid restaurants={query.data.items} />
           {pageCount > 1 && (
             <Pagination
               sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}

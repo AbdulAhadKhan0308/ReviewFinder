@@ -133,7 +133,7 @@ Leading and trailing spaces are ignored; an empty keyword means no filter.
 
 Restaurants (GET /api/restaurants)
 - keyword: up to 100 characters; matches the title, location or description.
-- cuisineIds: repeatable; returns only restaurants that have all of them.
+- cuisineIds: repeatable, up to 20; returns only restaurants that have all of them.
 - minRating, maxRating: decimals from 1 to 5 (up to 2 places), both inclusive;
   min can't be greater than max. If either is set, unrated restaurants are hidden.
 - sort: ratingDesc (default) or ratingAsc. Unrated restaurants come last in both;

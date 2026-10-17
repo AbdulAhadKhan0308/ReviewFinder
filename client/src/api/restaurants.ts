@@ -37,6 +37,8 @@ export const restaurantPath = (id: string) => `/api/restaurants/${encodeURICompo
 export const myRestaurantsPath = (page: number, pageSize: number) =>
   `/api/me/restaurants?page=${page}&pageSize=${pageSize}`
 
+export const restaurantsListPath = (query: URLSearchParams) => `/api/restaurants?${query}`
+
 export const createRestaurant = (input: RestaurantInput) =>
   apiFetch<RestaurantDetail>('/api/restaurants', { method: 'POST', body: input })
 
