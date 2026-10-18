@@ -77,18 +77,8 @@ public class AuthController(
     [AllowAnonymous]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var id = Guid.CreateVersion7();
-        var user = new AppUser
-        {
-            Id = id,
-            // Identity requires unique usernames. Using the ID keeps email out of that rule,
-            // so allowing one account per email and role later needs no username changes.
-            UserName = id.ToString(),
-            Email = request.Email.Trim(),
-            DisplayName = request.DisplayName.Trim(),
-            Role = Enum.Parse<UserRole>(request.Role),
-            CreatedAt = DateTime.UtcNow,
-        };
+        var email = request.Email.Trim();
+        var user = AppUser.Create(email, request.DisplayName.Trim(), Enum.Parse<UserRole>(request.Role));
 
         IdentityResult result;
         try
@@ -98,7 +88,7 @@ public class AuthController(
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
             // Two registrations with the same email raced past Identity's duplicate check.
-            result = IdentityResult.Failed(userManager.ErrorDescriber.DuplicateEmail(user.Email));
+            result = IdentityResult.Failed(userManager.ErrorDescriber.DuplicateEmail(email));
         }
 
         if (!result.Succeeded)

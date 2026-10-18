@@ -1,7 +1,6 @@
 RESTAURANT REVIEW PLATFORM — DATA MODEL AND API
 
 Companion to requirements.txt, which holds the product rules and field limits.
-Items marked (Qn pending) follow that question's suggested default until answered.
 
 1. DATA MODEL (PostgreSQL)
 

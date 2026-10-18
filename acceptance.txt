@@ -1,0 +1,506 @@
+# Acceptance
+
+The acceptance criteria for the restaurant review platform, and the results of checking each one. The requirements
+behind them are in [requirements.txt](requirements.txt).
+
+Each item was checked in the web app on 17 Oct 2026, using it as a reviewer or owner would. For every item this page
+lists what was expected, what was observed, and screenshots from [screenshots/](screenshots/).
+
+**Result: 22 items pass; 4 are partly covered.** Items 14, 15, 16 and 21 are about requests sent directly to the API,
+bypassing the app. The app's side of each passes; the direct-request part can't be shown from the app and isn't
+included here.
+
+## Acceptance criteria
+
+Confirmed-scope checks
+
+1. [x] A user can register as either supported role and sign in.
+2. [x] Invalid registration/sign-in input produces clear errors.
+3. [x] A reviewer sees restaurant summaries and can open restaurant details.
+4. [x] Cuisine and average-rating filters work individually and together.
+5. [x] Keyword search finds restaurants by title, location or description.
+6. [x] Selecting several cuisines shows only restaurants that have all of them.
+7. [x] Rating filter supports a minimum threshold and a min-max range.
+8. [x] With a rating filter on, restaurants with no reviews are hidden.
+9. [x] Highest-rated-first is the initial default; either direction can be selected.
+10. [x] Selected filters and sort direction survive leaving and returning.
+11. [x] An owner can create, view, update, and delete their own restaurants.
+12. [x] Image upload accepts only JPG/JPEG, PNG or WebP files up to 5 MB.
+13. [x] Restaurants without an uploaded image show the default image.
+14. [x] Another owner cannot update/delete those restaurants via direct API calls.
+15. [x] Owners cannot view other owners' restaurants or write reviews, even via direct API calls.
+16. [x] Unauthenticated users cannot view or change restaurants or reviews, even via direct API calls.
+17. [x] Empty lists, failed requests, and missing restaurants are handled gracefully.
+18. [x] Web navigation meets the SPA/hydration requirement.
+
+Review checks
+
+19. [x] Only reviewers can create reviews; ratings are integers 1 to 5, text optional.
+20. [x] A reviewer can post more than one review for the same restaurant.
+21. [x] New reviews and restaurants take their author/owner from the session, not the request.
+22. [x] Review changes update the displayed average, count, filtering, and sorting.
+23. [x] Users cannot edit/delete another reviewer's review.
+24. [x] Reviews can be filtered by keyword, rating range and date range, and sorted by rating or date in either
+    direction; reviewers and owners both can do this.
+25. [x] A restaurant's average rating and review count cover all its reviews, whatever review filters are applied.
+26. [x] Review filters start cleared on each restaurant; restaurant list filters and sort are remembered.
+
+## How it was tested
+
+- **App:** the current `main` branch (commit `7c09854`), API and client run locally against the Docker PostgreSQL database.
+- **Browser checks:** Microsoft Edge (headless) driven by Playwright at 1280 × 900, clicking and typing as a user would.
+  Every screenshot was taken during these runs.
+- **Failed requests:** simulated by blocking or failing specific API calls in the browser (item 17), plus one run with the
+  API actually stopped.
+
+### Test data
+
+| Account | Role | Password |
+|---|---|---|
+| Olivia (`acc.olivia@example.com`) | Restaurant owner | `password123` |
+| Oscar (`acc.oscar@example.com`) | Restaurant owner | `password123` |
+| Rita (`acc.rita@example.com`) | Reviewer | `password123` |
+| Ravi (`acc.ravi@example.com`) | Reviewer | `password123` |
+| Nina, Noah | Reviewer, owner | Created during item 1 |
+
+| Restaurant | Owner | Cuisines | Image | Average rating at the start |
+|---|---|---|---|---|
+| Sakura Sushi | Olivia | Japanese | WebP | 4.67 (3 reviews) |
+| Trattoria Bella | Olivia | Italian | JPG | 4.20 (5 reviews, written 40, 20 and 5 days ago and today) |
+| Taco Fiesta | Oscar | Mexican | WebP | 3.50 (2) |
+| Le Petit Bistro | Olivia | French | PNG | 3.00 (2) |
+| Fusion Kitchen | Olivia | Italian, Japanese | none | 2.00 (1) |
+| Golden Dragon | Oscar | Chinese | none | 1.00 (1) |
+| Athens Grill | Oscar | Greek | none | no reviews |
+| Pizza Uno | Olivia | Italian | none | no reviews |
+| La Pino's Italia | `a@gmail.com` | Italian | yes | no reviews (created earlier, outside this check) |
+
+## Summary
+
+| # | Checklist item | Result | Evidence |
+|---|---|---|---|
+| 1 | A user can register as either supported role and sign in | ✅ Pass | 04, 05, 08 |
+| 2 | Invalid registration/sign-in input produces clear errors | ✅ Pass | 01–03, 06, 07 |
+| 3 | A reviewer sees restaurant summaries and can open restaurant details | ✅ Pass | 10, 11 |
+| 4 | Cuisine and average-rating filters work individually and together | ✅ Pass | 14, 16, 20 |
+| 5 | Keyword search finds restaurants by title, location or description | ✅ Pass | 12, 13 |
+| 6 | Selecting several cuisines shows only restaurants that have all of them | ✅ Pass | 15 |
+| 7 | Rating filter supports a minimum threshold and a min-max range | ✅ Pass | 16, 18, 19 |
+| 8 | With a rating filter on, restaurants with no reviews are hidden | ✅ Pass | 16, 17 |
+| 9 | Highest-rated-first is the initial default; either direction can be selected | ✅ Pass | 10, 21 |
+| 10 | Selected filters and sort direction survive leaving and returning | ✅ Pass | 22–26 |
+| 11 | An owner can create, view, update, and delete their own restaurants | ✅ Pass | 50, 51, 55–61 |
+| 12 | Image upload accepts only JPG/JPEG, PNG or WebP files up to 5 MB | ✅ Pass | 52–58 |
+| 13 | Restaurants without an uploaded image show the default image | ✅ Pass | 10, 50, 59, 62 |
+| 14 | Another owner cannot update/delete those restaurants via direct API calls | ◐ Partly covered | 50, 63 |
+| 15 | Owners cannot view other owners' restaurants or write reviews, even via direct API calls | ◐ Partly covered | 43, 50, 63 |
+| 16 | Unauthenticated users cannot view or change restaurants or reviews, even via direct API calls | ◐ Partly covered | 70 |
+| 17 | Empty lists, failed requests, and missing restaurants are handled gracefully | ✅ Pass | 05, 71–79 |
+| 18 | Web navigation meets the SPA/hydration requirement | ✅ Pass | Recorded values |
+| 19 | Only reviewers can create reviews; ratings are integers 1 to 5, text optional | ✅ Pass | 30, 36, 43 |
+| 20 | A reviewer can post more than one review for the same restaurant | ✅ Pass | 37 |
+| 21 | New reviews and restaurants take their author/owner from the session, not the request | ◐ Partly covered | 37, 55 |
+| 22 | Review changes update the displayed average, count, filtering, and sorting | ✅ Pass | 37–41 |
+| 23 | Users cannot edit/delete another reviewer's review | ✅ Pass | 42, 43 |
+| 24 | Reviews can be filtered by keyword, rating range and date range, and sorted either way; reviewers and owners | ✅ Pass | 30–34, 43 |
+| 25 | A restaurant's average rating and review count cover all its reviews, whatever review filters are applied | ✅ Pass | 31 |
+| 26 | Review filters start cleared on each restaurant; restaurant list filters and sort are remembered | ✅ Pass | 35, 22–26 |
+
+---
+
+## Accounts
+
+### 1. A user can register as either supported role and sign in — ✅ Pass
+
+**Expected:** registering as a reviewer or as a restaurant owner creates the account and signs it in, landing on that
+role's home page; the account can then sign in with its email and password.
+
+**Observed:**
+- Nina registered as a **Reviewer** and landed on **Restaurants**, with "Nina · Reviewer" in the header (04).
+- Noah registered as a **Restaurant owner** and landed on **My restaurants**, with "Noah · Restaurant owner" and the
+  empty state "No restaurants yet" (05).
+- After signing out, Nina signed in as `ACC.Nina@Example.com`: the email matched regardless of case (08).
+
+| Reviewer registered | Owner registered |
+|---|---|
+| ![](screenshots/04-registered-reviewer-home.png) | ![](screenshots/05-registered-owner-home.png) |
+
+### 2. Invalid registration/sign-in input produces clear errors — ✅ Pass
+
+**Expected:** each problem is explained next to the field it concerns, in plain language; nothing is submitted until
+the browser-side checks pass.
+
+**Observed:**
+
+| Input | Messages shown |
+|---|---|
+| Empty registration form (01) | "Enter your email address." · "Enter a display name." · "Enter a password." · "Choose how you will use Restaurant Reviews." |
+| `not-an-email`, 51-character name, `short` (02) | "Enter a valid email address." · "Display name must be 50 characters or fewer." · "Password must be 8 to 128 characters." |
+| Existing email in different case, `ACC.RITA@example.com` (03) | "An account with this email already exists." (from the server, on the email field) |
+| Empty sign-in form (06) | "Enter your email address." · "Enter your password." |
+| Wrong password (07) | "Incorrect email or password." |
+| Unknown email | "Incorrect email or password." (the same message, so it doesn't reveal which emails are registered) |
+
+| Invalid registration | Wrong password |
+|---|---|
+| ![](screenshots/02-register-invalid-input.png) | ![](screenshots/07-signin-wrong-password.png) |
+
+Also: [01](screenshots/01-register-empty-form.png), [03](screenshots/03-register-duplicate-email.png),
+[06](screenshots/06-signin-empty-form.png).
+
+---
+
+## Reviewers' restaurant list
+
+### 3. A reviewer sees restaurant summaries and can open restaurant details — ✅ Pass
+
+**Expected:** a list of all restaurants, each showing image, name, location, cuisines and average rating (or "No
+reviews"); selecting one opens its own page.
+
+**Observed:** Rita sees all 9 restaurants from both owners, each card with image, name, location, cuisine chips and
+"★ 4.67 · 3 reviews" or "No reviews" (10). Clicking Trattoria Bella opened `/restaurants/{id}` showing the full image,
+location, cuisine, "★ 4.20 · 5 reviews", description, date added and its reviews (11).
+
+| List | Details |
+|---|---|
+| ![](screenshots/10-reviewer-list-default.png) | ![](screenshots/11-restaurant-details.png) |
+
+### 4. Cuisine and average-rating filters work individually and together — ✅ Pass
+
+**Expected:** each filter narrows the list on its own, and combining them shows only restaurants matching both.
+
+**Observed:**
+- **Italian only:** Trattoria Bella, Fusion Kitchen, La Pino's Italia, Pizza Uno (14).
+- **Min rating 3.5 only:** Sakura Sushi, Trattoria Bella, Taco Fiesta (16).
+- **Italian and min rating 4:** Trattoria Bella only (20). Fusion Kitchen (2.00) and the two unrated Italian places are
+  correctly excluded.
+
+![](screenshots/20-cuisine-and-rating.png)
+
+### 5. Keyword search finds restaurants by title, location or description — ✅ Pass
+
+**Expected:** a case-insensitive, partial-word search across all three fields.
+
+**Observed:**
+
+| Keyword | Matches | Matched on |
+|---|---|---|
+| `harbour` (12) | Trattoria Bella, Taco Fiesta | Location: "12 Harbour Road…", "Harbour Market, stall 4" |
+| `charcoal` (13) | Athens Grill | Description: "Gyros and souvlaki, cooked over charcoal." |
+| `SUSHI` | Sakura Sushi | Title, in different case |
+
+![](screenshots/12-keyword-location.png)
+
+### 6. Selecting several cuisines shows only restaurants that have all of them — ✅ Pass
+
+**Expected:** Italian + Japanese shows only restaurants that have both.
+
+**Observed:** only Fusion Kitchen (Italian, Japanese) is shown (15); the Italian-only and Japanese-only restaurants are
+excluded. The field's hint says "Restaurants with all selected cuisines".
+
+![](screenshots/15-cuisine-italian-and-japanese.png)
+
+### 7. Rating filter supports a minimum threshold and a min-max range — ✅ Pass
+
+**Expected:** a minimum alone, a maximum alone, or both as an inclusive range; decimals up to 2 places.
+
+**Observed:**
+- **Min 3.5:** Sakura Sushi (4.67), Trattoria Bella (4.20), Taco Fiesta (3.50, included because the limit is inclusive) (16).
+- **Range 3 to 4:** Taco Fiesta (3.50), Le Petit Bistro (3.00, inclusive) (18).
+- **Invalid value 4.444:** the field shows "Use up to 2 decimals." and the list keeps the last valid range (19).
+  A maximum below the minimum shows "Can't be below the minimum." (also checked during piece 3).
+
+| Range 3–4 | Invalid input |
+|---|---|
+| ![](screenshots/18-rating-range.png) | ![](screenshots/19-rating-invalid-input.png) |
+
+### 8. With a rating filter on, restaurants with no reviews are hidden — ✅ Pass
+
+**Expected:** unrated restaurants disappear as soon as any rating limit is set, even one they'd otherwise "fit".
+
+**Observed:** with **Max 3** only, the list shows Le Petit Bistro (3.00), Fusion Kitchen (2.00) and Golden Dragon (1.00);
+Athens Grill, La Pino's Italia and Pizza Uno (no reviews) are hidden (17).
+
+![](screenshots/17-rating-max-hides-unrated.png)
+
+### 9. Highest-rated-first is the initial default; either direction can be selected — ✅ Pass
+
+**Expected:** the list starts sorted by average rating, highest first; switching to lowest first reverses the rated
+restaurants. Per Q14, unrated restaurants come last either way, and equal ratings are ordered by name.
+
+**Observed:**
+- **Default**, labelled "Highest rated first": 4.67, 4.20, 3.50, 3.00, 2.00, 1.00, then Athens Grill, La Pino's Italia,
+  Pizza Uno (unrated, by name) (10).
+- **Lowest rated first:** 1.00, 2.00, 3.00, 3.50, 4.20, 4.67, then the same three unrated restaurants (21).
+
+![](screenshots/21-sort-lowest-first.png)
+
+### 10. Selected filters and sort direction survive leaving and returning — ✅ Pass
+
+**Expected:** after leaving the list and coming back, the reviewer's last filters and sort are restored, separately for
+each account in the same browser (Q10).
+
+**Observed** (Rita chose cuisine Italian and lowest rated first, 22):
+
+| Step | Result |
+|---|---|
+| Opened Fusion Kitchen, then the page's "Restaurants" link back to `/` (23) | Italian + lowest first restored |
+| Opened the app at `/` in a new tab (24) | Restored |
+| Signed out; signed in as Ravi (25) | Ravi sees the unfiltered default list |
+| Signed out; signed in as Rita again (26) | Rita's Italian + lowest first restored |
+
+The page number isn't remembered, as specified.
+
+| Before leaving | After signing in again |
+|---|---|
+| ![](screenshots/22-remember-before-leaving.png) | ![](screenshots/26-remember-after-sign-in.png) |
+
+---
+
+## Restaurant owners
+
+### 11. An owner can create, view, update, and delete their own restaurants — ✅ Pass
+
+**Expected:** owners see their own restaurants, can add one with validation, view it, edit it and delete it after
+confirming.
+
+**Observed:**
+- **List:** Olivia's "My restaurants" shows only her 5 restaurants, newest first (50).
+- **Create:** an empty form shows "Enter a title." · "Enter a location." · "Enter a description." · "Choose 1 to 3
+  cuisines." (51). Harbour Noodle Bar was then created with a JPG and opened on its own page (55).
+- **Update:** the edit form was prefilled with the title and the Chinese and Japanese cuisines (56); renaming it to
+  Harbour Noodle House and replacing the image worked (57, 58).
+- **Delete:** a confirmation dialog warns that the restaurant and its reviews will be permanently deleted (60); after
+  confirming, the list is back to the original 5 (61), and the old URL shows "Restaurant not found".
+
+| Created | Delete confirmation |
+|---|---|
+| ![](screenshots/55-created-restaurant-with-jpg.png) | ![](screenshots/60-delete-restaurant-confirmation.png) |
+
+Also: [50](screenshots/50-owner-my-restaurants.png), [51](screenshots/51-create-validation-errors.png),
+[56](screenshots/56-edit-form-prefilled.png), [61](screenshots/61-after-deleting-restaurant.png).
+
+### 12. Image upload accepts only JPG/JPEG, PNG or WebP files up to 5 MB — ✅ Pass
+
+**Expected:** JPG, PNG and WebP files up to 5 MB are accepted; other formats and larger files are rejected with a clear
+message. The server checks the file's actual content, not its name.
+
+**Observed in the browser:**
+
+| File | Result |
+|---|---|
+| `animation.gif` (52) | Rejected straight away: "Image must be a JPG, PNG or WebP file." |
+| `too-big.png`, 6 MB (53) | Rejected straight away: "Image must be 5 MB or smaller." |
+| `notes-renamed.jpg`, a text file (54) | Passes the browser's name-based check and is previewed as a broken image, then **rejected by the server** on save: "Image must be a JPG, PNG or WebP file." Nothing saved. |
+| `trattoria.jpg` (55) | Accepted |
+| `bistro.png`, 1.5 MB (57) | Accepted |
+| `sakura.webp` (58) | Accepted, served back as `image/webp` |
+
+| GIF rejected | Too big | Server rejects renamed text file |
+|---|---|---|
+| ![](screenshots/52-image-gif-rejected.png) | ![](screenshots/53-image-too-big-rejected.png) | ![](screenshots/54-image-renamed-text-rejected-by-server.png) |
+
+### 13. Restaurants without an uploaded image show the default image — ✅ Pass
+
+**Expected:** a restaurant with no image shows the default image on its card and its page, including after its image is
+removed.
+
+**Observed:** Fusion Kitchen, Golden Dragon, Athens Grill and Pizza Uno show the plate-and-cutlery default on their cards
+(10, 50) and Pizza Uno on its page (62). After removing Harbour Noodle House's image, its page showed the default (59).
+
+| Default on the detail page | After removing an image |
+|---|---|
+| ![](screenshots/62-default-image-detail.png) | ![](screenshots/59-image-removed-default-shown.png) |
+
+### 14. Another owner cannot update/delete those restaurants via direct API calls — ◐ Partly covered
+
+**Expected:** an owner can't change or delete a restaurant that belongs to another owner.
+
+**Observed in the app:** another owner is never offered Edit or Delete for it. Olivia's "My restaurants" lists only her
+own restaurants (50); opening Oscar's Athens Grill by its page URL or its edit URL shows "Restaurant not found" (63).
+
+**Not covered here:** update and delete requests sent directly to the API.
+
+### 15. Owners cannot view other owners' restaurants or write reviews, even via direct API calls — ◐ Partly covered
+
+**Expected:** owners don't see other owners' restaurants and can't write reviews, including on their own restaurants.
+
+**Observed in the app:**
+- Olivia's "My restaurants" lists only her own 5 restaurants (50).
+- Opening Oscar's Athens Grill by URL, or its edit page, shows "Restaurant not found" (63).
+- On her own restaurant's page there's no "Write a review" button (43).
+
+**Not covered here:** viewing restaurants or posting reviews through requests sent directly to the API.
+
+![](screenshots/63-other-owners-restaurant-not-found.png)
+
+---
+
+## Access, states and navigation
+
+### 16. Unauthenticated users cannot view or change restaurants or reviews, even via direct API calls — ◐ Partly covered
+
+**Expected:** signed-out users can't see or change restaurants or reviews.
+
+**Observed in the app:** opening a restaurant's URL while signed out shows the sign-in page instead (70); after signing
+in, the app went on to that restaurant. No restaurant or review page can be reached without signing in.
+
+**Not covered here:** requests sent directly to the API without signing in.
+
+![](screenshots/70-signed-out-redirected-to-sign-in.png)
+
+### 17. Empty lists, failed requests, and missing restaurants are handled gracefully — ✅ Pass
+
+**Expected:** no blank or broken screens: empty results explain themselves, failures explain what happened and offer a
+retry, and missing items say so.
+
+**Observed:**
+
+| Situation | What the app shows |
+|---|---|
+| Owner with no restaurants (05) | "No restaurants yet · Add your first restaurant so reviewers can find it." with an Add restaurant button |
+| Restaurant filters with no matches (71) | "No restaurants match these filters" with a hint and a Clear filters button |
+| Restaurant without reviews (72) | "No reviews yet. Be the first to write one." |
+| Review filters with no matches | "Showing 0 of 5 reviews · No reviews match these filters." with Clear filters |
+| Unknown or deleted restaurant ID (73) | "Restaurant not found · It may have been deleted, or the link may be wrong." with a link home |
+| Malformed restaurant ID, `/restaurants/not-an-id` | The same "Restaurant not found" |
+| Unknown page, `/no/such/page` (74) | "Page not found" with a link home |
+| Server unreachable while filtering (75) | "Couldn't load the restaurants. Couldn't reach the server. Check your connection and try again." with Retry; Retry recovered once the server was back (76) |
+| Server error loading reviews (77) | "Couldn't load the reviews." with Retry; the rest of the restaurant page stays usable |
+| Server unreachable while saving a restaurant (78) | "Couldn't reach the server…"; the form keeps everything typed, nothing is lost |
+| API actually stopped when opening the app (79) | "Couldn't load the app: Request failed with status 502." with Retry. Handled, though the wording is technical |
+
+| Unreachable while filtering | Server error on reviews |
+|---|---|
+| ![](screenshots/75-list-server-unreachable.png) | ![](screenshots/77-reviews-server-error.png) |
+
+Also: [71](screenshots/71-empty-filter-results.png), [72](screenshots/72-restaurant-without-reviews.png),
+[73](screenshots/73-restaurant-not-found.png), [74](screenshots/74-page-not-found.png),
+[76](screenshots/76-list-recovered-after-retry.png), [78](screenshots/78-save-server-unreachable.png),
+[79](screenshots/79-api-down-at-startup.png).
+
+### 18. Web navigation meets the SPA/hydration requirement — ✅ Pass
+
+**Expected:** the client is a single-page application: moving around the app swaps content in the page without loading a
+new page from the server.
+
+**Observed:** the app is a React single-page app (Vite build, React Router). In one browser session the test went
+list → restaurant → home → keyword filter → restaurant → Back → sign out → register page → sign in page (9 navigations,
+including the browser's Back button). Recorded during that run:
+
+| Measure | Value |
+|---|---|
+| Full page loads (document requests) during the 9 navigations | **0** |
+| Page-load entries in the browser's navigation timing | **1** (the initial load only) |
+| A marker set on the page before navigating was still there afterwards | **Yes**, so it was the same page throughout |
+
+No screenshot, since nothing visible distinguishes this; the values above come from the test run.
+
+---
+
+## Reviews
+
+### 19. Only reviewers can create reviews; ratings are integers 1 to 5, text optional — ✅ Pass
+
+**Expected:** owners can't post reviews; ratings must be whole numbers from 1 to 5; reviews without text are allowed.
+
+**Observed:**
+- Posting without choosing stars shows "Choose a rating." and nothing is posted (36).
+- The star control only offers whole ratings from 1 to 5. The text field is labelled "Your review (optional)", and a
+  review without text is listed with just its stars (30).
+- Owners have no "Write a review" button (43).
+
+![](screenshots/36-review-rating-required.png)
+
+### 20. A reviewer can post more than one review for the same restaurant — ✅ Pass
+
+**Expected:** a second review by the same reviewer is added, not rejected or merged (Q3).
+
+**Observed:** Rita posted two more reviews on Golden Dragon; all three of her reviews are listed, each marked "Rita (you)",
+and the rating went from 1.00 (1 review) to 3.33 (3 reviews) (37).
+
+![](screenshots/37-two-reviews-by-same-reviewer.png)
+
+### 21. New reviews and restaurants take their author/owner from the session, not the request — ◐ Partly covered
+
+**Expected:** whoever is signed in becomes the new restaurant's owner or the new review's author.
+
+**Observed in the app:** the reviews Rita posted are listed as "Rita (you)" (37), and the restaurant Olivia created
+opened with her Edit and Delete buttons and appeared in her "My restaurants" (55). The app offers no way to choose a
+different owner or author.
+
+**Not covered here:** sending someone else's ID as owner or author in a request made directly to the API.
+
+### 22. Review changes update the displayed average, count, filtering, and sorting — ✅ Pass
+
+**Expected:** posting, editing or deleting a review immediately changes the restaurant's rating and count, and the
+restaurant list's order and rating filter use the new value.
+
+**Observed** on Golden Dragon:
+
+| Change | Restaurant page | Restaurant list |
+|---|---|---|
+| Start | ★ 1.00 · 1 review | 6th of the rated restaurants |
+| Rita posts 5★, then 4★ (37) | ★ 3.33 · 3 reviews | Moved up to 4th, between Taco Fiesta (3.50) and Le Petit Bistro (3.00) (38); now matches "Min rating 3.3" |
+| Rita edits the 5★ to 2★ (39) | ★ 2.33 · 3 reviews | |
+| Rita deletes the 4★, after confirming (40, 41) | ★ 1.50 · 2 reviews | No longer matches "Min rating 3.3" |
+
+| List re-sorted after posting | After deleting |
+|---|---|
+| ![](screenshots/38-list-resorted-after-reviews.png) | ![](screenshots/41-after-deleting-review.png) |
+
+Also: [39](screenshots/39-after-editing-review.png), [40](screenshots/40-delete-review-confirmation.png).
+
+### 23. Users cannot edit/delete another reviewer's review — ✅ Pass
+
+**Expected:** edit and delete are offered only on the user's own reviews.
+
+**Observed:**
+- On Trattoria Bella, Ravi sees Edit and Delete only on his two reviews, not on Rita's three (42).
+- The restaurant's owner sees no Edit or Delete on any review (43).
+
+![](screenshots/42-edit-delete-only-on-own-reviews.png)
+
+### 24. Reviews can be filtered by keyword, rating range and date range, and sorted by rating or date in either direction; reviewers and owners both can do this — ✅ Pass
+
+**Expected:** each filter and sort works on a restaurant's reviews, for reviewers and for the restaurant's owner.
+
+**Observed** on Trattoria Bella's 5 reviews:
+
+| Filter or sort | Result |
+|---|---|
+| Default, newest first (30) | 4★ today, 3★ today (no text), 5★ 5 days ago, 4★ 20 days ago, 5★ 40 days ago |
+| Keyword `pasta` (31) | "Great pasta, friendly staff." — Showing 1 of 5 |
+| Min rating 5 (32) | The two 5★ reviews — Showing 2 of 5 |
+| Rating 4 to 5 | The four reviews rated 4 or 5 — Showing 4 of 5 |
+| Written from 30 days ago to 10 days ago (33) | The review from 20 days ago — Showing 1 of 5 |
+| Lowest rating first (34) | 3★, 4★, 4★, 5★, 5★ (equal ratings newest first) |
+| Highest rating first | 5★, 5★, 4★, 4★, 3★ |
+| Oldest first | 40 days ago, 20 days ago, 5 days ago, then today's two |
+| **Owner** Olivia: min rating 5, oldest first (43) | The two 5★ reviews, oldest first; no write, edit or delete controls |
+
+| Date range | Owner filtering her restaurant's reviews |
+|---|---|
+| ![](screenshots/33-reviews-date-range.png) | ![](screenshots/43-owner-filters-reviews.png) |
+
+Also: [30](screenshots/30-reviews-default.png), [32](screenshots/32-reviews-min-rating.png),
+[34](screenshots/34-reviews-sorted.png).
+
+### 25. A restaurant's average rating and review count cover all its reviews, whatever review filters are applied — ✅ Pass
+
+**Expected:** filtering reviews changes only the list; the rating shown for the restaurant stays the same.
+
+**Observed:** with every review filter above applied, the header stayed "★ 4.20 · 5 reviews", while the list said
+"Showing 1 of 5 reviews", "Showing 2 of 5 reviews" and so on (31).
+
+![](screenshots/31-reviews-keyword-header-unchanged.png)
+
+### 26. Review filters start cleared on each restaurant; restaurant list filters and sort are remembered — ✅ Pass
+
+**Expected:** review filters don't carry over between restaurants or visits; restaurant list filters do (item 10).
+
+**Observed:** with "Min rating 5" applied on Trattoria Bella, opening Sakura Sushi showed all 3 of its reviews with no
+filters (35), and going back to Trattoria Bella through the list showed all 5 again. Restaurant list filters were
+restored as described under item 10.
+
+![](screenshots/35-reviews-cleared-on-other-restaurant.png)

@@ -4,8 +4,20 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReviews.Api.Auth;
 using RestaurantReviews.Api.Data;
+using RestaurantReviews.Api.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// "reset-db" recreates the database with demo data instead of starting the server.
+var resetDatabase = args.Contains(DatabaseReset.Command);
+if (resetDatabase)
+{
+    // Keeps the console to the summary and demo accounts, without every SQL command.
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+    // Starting from an empty database makes EF Core log expected errors: the database or its migration history
+    // table doesn't exist yet. Real failures still stop the command with an error.
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database", LogLevel.None);
+}
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
@@ -76,6 +88,12 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (resetDatabase)
+{
+    Environment.ExitCode = await DatabaseReset.RunAsync(app);
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
