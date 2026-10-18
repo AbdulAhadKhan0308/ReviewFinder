@@ -1,0 +1,9 @@
+{
+  "containerOverrides": [
+    {
+      "name": "api",
+      "command": ["dotnet", "RestaurantReviews.Api.dll", "reset-db"],
+      "environment": [{ "name": "ASPNETCORE_ENVIRONMENT", "value": "Development" }]
+    }
+  ]
+}

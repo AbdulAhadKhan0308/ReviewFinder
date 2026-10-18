@@ -15,6 +15,7 @@ except the sign-in and registration pages.
 | [requirements.txt](requirements.txt) | Product requirements, answered design questions (Q1–Q15), acceptance checklist, build progress |
 | [data-model-and-api.txt](data-model-and-api.txt) | Database tables, API endpoints, filter and sorting rules, request and response shapes |
 | [acceptance.txt](acceptance.txt) | Acceptance criteria, and each one checked in the app with screenshots from [screenshots/](screenshots/) |
+| [deploy/README.md](deploy/README.md) | AWS deployment: architecture, setup steps, task definition and IAM policies |
 
 ## High-level design
 
@@ -26,7 +27,8 @@ flowchart LR
 ```
 
 The app is designed to be served from the same origin as the API, so cookies are first-party and no CORS setup is needed.
-In development, Vite serves the React app and forwards `/api` requests to the API. Production hosting isn't set up yet.
+In development, Vite serves the React app and forwards `/api` requests to the API. In production, the API serves the
+React build itself from one Docker image; see [Deploying to AWS](#deploying-to-aws).
 
 ### Frontend: `client/`
 
@@ -212,3 +214,11 @@ accounts, which all use the password `demo-password`:
 
 It also works on a database that doesn't exist yet, so it can replace the `dotnet ef database update` step above. It only
 runs in the Development environment. The data is defined in `server/RestaurantReviews.Api/Seeding/DemoData.cs`.
+
+## Deploying to AWS
+
+The [Dockerfile](Dockerfile) builds one image containing the API, the React build it serves, and a migrations bundle.
+It's set up to run on ECS Fargate in Sydney (`ap-southeast-2`), behind an Application Load Balancer and CloudFront,
+which provides a free HTTPS address so no domain is needed. Data is in RDS PostgreSQL, and the sign-in keys are shared
+through SSM Parameter Store, so redeploys don't sign users out. [deploy/README.md](deploy/README.md) has the
+architecture diagram, the setup steps, and the task definition and IAM policies to use. It hasn't been deployed yet.

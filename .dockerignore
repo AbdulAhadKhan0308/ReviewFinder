@@ -1,0 +1,13 @@
+**/node_modules
+**/bin
+**/obj
+client/dist
+.git
+.vs
+.vscode
+reference
+screenshots
+deploy
+*.local.txt
+*.md
+*.txt

@@ -1,0 +1,14 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "SignInKeys",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParametersByPath", "ssm:PutParameter"],
+      "Resource": [
+        "arn:aws:ssm:ap-southeast-2:<account>:parameter/restaurant-reviews/data-protection",
+        "arn:aws:ssm:ap-southeast-2:<account>:parameter/restaurant-reviews/data-protection/*"
+      ]
+    }
+  ]
+}

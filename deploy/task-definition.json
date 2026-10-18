@@ -1,0 +1,37 @@
+{
+  "family": "restaurant-reviews",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "runtimePlatform": { "operatingSystemFamily": "LINUX", "cpuArchitecture": "X86_64" },
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<account>:role/restaurant-reviews-execution-role",
+  "taskRoleArn": "arn:aws:iam::<account>:role/restaurant-reviews-task-role",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "<account>.dkr.ecr.ap-southeast-2.amazonaws.com/restaurant-reviews:<tag>",
+      "essential": true,
+      "portMappings": [{ "containerPort": 8080, "protocol": "tcp" }],
+      "environment": [
+        { "name": "AWS_REGION", "value": "ap-southeast-2" },
+        { "name": "DataProtection__ParameterStorePath", "value": "/restaurant-reviews/data-protection" },
+        { "name": "ForwardedHeaders__ProtoHeaderName", "value": "CloudFront-Forwarded-Proto" }
+      ],
+      "secrets": [
+        {
+          "name": "ConnectionStrings__Default",
+          "valueFrom": "arn:aws:ssm:ap-southeast-2:<account>:parameter/restaurant-reviews/connection-string"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/restaurant-reviews",
+          "awslogs-region": "ap-southeast-2",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}
