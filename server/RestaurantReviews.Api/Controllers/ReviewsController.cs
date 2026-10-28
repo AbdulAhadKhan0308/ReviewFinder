@@ -51,6 +51,9 @@ public record ReviewQuery : IValidatableObject
     [AllowedValues(Newest, Oldest, RatingDesc, RatingAsc, ErrorMessage = "Sort must be newest, oldest, ratingDesc or ratingAsc.")]
     public string Sort { get; init; } = Newest;
 
+    [FromQuery(Name = "mine")]
+    public int? Mine { get; init; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (MinRating > MaxRating)
@@ -121,6 +124,11 @@ public class ReviewsController(AppDbContext db) : ControllerBase
         {
             var toUtc = to.UtcDateTime;
             reviews = reviews.Where(r => r.CreatedAt < toUtc);
+        }
+
+        if (query.Mine is { } mine && mine == 1)
+        {
+            reviews = reviews.Where(r => r.ReviewerId == User.GetUserId());
         }
 
         // Equal ratings show newest first; the ID makes the order stable across pages.

@@ -18,6 +18,7 @@ export type ReviewFilters = {
   from: string
   to: string
   sort: ReviewSort
+  mine: number | null
 }
 
 export const emptyReviewFilters: ReviewFilters = {
@@ -27,6 +28,7 @@ export const emptyReviewFilters: ReviewFilters = {
   from: '',
   to: '',
   sort: 'newest',
+  mine: null
 }
 
 const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -67,6 +69,7 @@ export function readReviewFilters(params: URLSearchParams): ReviewFilters {
     from: readDate(params.get('from')),
     to: readDate(params.get('to')),
     sort: reviewSorts.includes(sort as ReviewSort) ? (sort as ReviewSort) : 'newest',
+    mine: params.get('mine') === '1' ? 1 : params.get('mine') === '0' ? 0 : null
   }
 }
 
@@ -79,6 +82,7 @@ export function writeReviewFilters(filters: ReviewFilters, page: number) {
   if (filters.from) params.set('from', filters.from)
   if (filters.to) params.set('to', filters.to)
   if (filters.sort !== 'newest') params.set('sort', filters.sort)
+  if (filters.mine !== null) params.set('mine', String(filters.mine))
   if (page > 1) params.set('page', String(page))
   return params
 }
@@ -88,7 +92,8 @@ export const hasActiveFilters = (filters: ReviewFilters) =>
   filters.minRating !== null ||
   filters.maxRating !== null ||
   filters.from !== '' ||
-  filters.to !== ''
+  filters.to !== '' ||
+  filters.mine !== null
 
 export function dateRangeError(filters: ReviewFilters) {
   return filters.from && filters.to && filters.from > filters.to
@@ -113,5 +118,6 @@ export function reviewsApiQuery(filters: ReviewFilters, page: number, pageSize: 
   if (filters.sort !== 'newest') params.set('sort', filters.sort)
   params.set('page', String(page))
   params.set('pageSize', String(pageSize))
+  if(filters.mine!==null) params.set('mine', String(filters.mine));
   return params
 }

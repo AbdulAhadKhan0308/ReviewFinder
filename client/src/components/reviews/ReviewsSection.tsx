@@ -3,8 +3,10 @@ import { useSearchParams } from 'react-router'
 import {
   Box,
   Button,
+  Checkbox,
   CircularProgress,
   Divider,
+  FormControlLabel,
   LinearProgress,
   Pagination,
   Paper,
@@ -47,7 +49,8 @@ export function ReviewsSection({ restaurant, canWrite, onChanged }: Props) {
   const page = readPage(searchParams.get('page'))
   const query = useApiQuery<Page<Review>>(reviewsListPath(restaurant.id, reviewsApiQuery(filters, page, pageSize)))
   const [notice, setNotice] = useState<string | null>(null)
-
+  console.log("@@@ ReviewsSection");
+  
   const data = query.status === 'success' ? query.data : query.status === 'loading' ? query.previous : undefined
   const filtered = hasActiveFilters(filters)
   const pageCount = Math.ceil((data?.totalCount ?? 0) / pageSize)
@@ -81,6 +84,14 @@ export function ReviewsSection({ restaurant, canWrite, onChanged }: Props) {
         {(restaurant.reviewCount > 0 || filtered) && (
           <ReviewFilterBar filters={filters} onChange={applyFilters} />
         )}
+
+        {"checkbox"}
+        <FormControlLabel label="see my review only" 
+        control={<Checkbox checked={filters.mine === 1}
+        onChange={
+          (e)=>applyFilters({...filters,mine: e.target.checked? 1: 0})
+          }/>
+        }/>
 
         {data && restaurant.reviewCount > 0 && (
           <Typography variant="body2" color="text.secondary" aria-live="polite">
