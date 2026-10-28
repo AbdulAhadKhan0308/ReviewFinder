@@ -22,6 +22,7 @@ const reviewPath = (id: string) => `/api/reviews/${encodeURIComponent(id)}`
 
 export const reviewsListPath = (restaurantId: string, query: URLSearchParams) =>
   `${restaurantReviewsPath(restaurantId)}?${query}`
+export const reviewsBreakdownPath = (restaurantId: string) => `${restaurantReviewsPath(restaurantId)}/breakdown`
 
 export const createReview = (restaurantId: string, input: ReviewInput) =>
   apiFetch<Review>(restaurantReviewsPath(restaurantId), { method: 'POST', body: input })

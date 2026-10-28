@@ -15,7 +15,7 @@ import {
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
 import { readPage } from '../../api/paging'
 import type { Page, RestaurantDetail } from '../../api/restaurants'
-import { createReview, reviewsListPath, type Review } from '../../api/reviews'
+import { createReview, reviewsBreakdownPath, reviewsListPath, type Review } from '../../api/reviews'
 import { useApiQuery } from '../../api/useApiQuery'
 import {
   emptyReviewFilters,
@@ -29,6 +29,7 @@ import { LoadError } from '../LoadError'
 import { ReviewFilterBar } from './ReviewFilterBar'
 import { ReviewForm } from './ReviewForm'
 import { ReviewItem } from './ReviewItem'
+import { ReviewBreakdown } from './ReviewBreakdown'
 
 const pageSize = 10
 
@@ -46,6 +47,7 @@ export function ReviewsSection({ restaurant, canWrite, onChanged }: Props) {
   const filters = readReviewFilters(searchParams)
   const page = readPage(searchParams.get('page'))
   const query = useApiQuery<Page<Review>>(reviewsListPath(restaurant.id, reviewsApiQuery(filters, page, pageSize)))
+  const [visibleBreakdown,setVisibleBreakdown] = useState(false);
   const [notice, setNotice] = useState<string | null>(null)
 
   const data = query.status === 'success' ? query.data : query.status === 'loading' ? query.previous : undefined
@@ -69,11 +71,17 @@ export function ReviewsSection({ restaurant, canWrite, onChanged }: Props) {
     else query.refresh()
   }
 
+  function onReviewCountClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    setVisibleBreakdown(true)
+  }
+
   return (
     <Box component="section" aria-labelledby="reviews-heading">
       <Typography variant="h5" component="h2" id="reviews-heading" sx={{ mb: 2 }}>
         Reviews
       </Typography>
+      {visibleBreakdown ?<ReviewBreakdown restaurantId={restaurant.id} />:<Button onClick={onReviewCountClick}>{"Show review counts"}</Button>}
 
       <Stack spacing={3}>
         {canWrite && <WriteReview restaurantId={restaurant.id} onPosted={() => handleChanged('Your review was posted.', true)} />}

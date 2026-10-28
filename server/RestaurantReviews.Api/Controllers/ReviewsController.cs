@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +76,22 @@ public record ReviewDto(
     DateTime UpdatedAt,
     // Only decides whether the app shows edit and delete buttons; the server checks authorship itself.
     bool IsMine);
+
+public record ReviewBreakdownDto
+{
+    [JsonPropertyName("5")]
+    public int Five { get; init; }
+    [JsonPropertyName("4")]
+    public int Four { get; init; }
+    [JsonPropertyName("3")]
+    public int Three { get; init; }
+    [JsonPropertyName("2")]
+    public int Two { get; init; }
+    [JsonPropertyName("1")]
+    public int One { get; init; }
+}
+
+public record ReviewBreakdownResponse(ReviewBreakdownDto Breakdown);
 
 [ApiController]
 [Authorize]
@@ -210,6 +228,26 @@ public class ReviewsController(AppDbContext db) : ControllerBase
 
         await db.Reviews.Where(r => r.Id == id).ExecuteDeleteAsync(CancellationToken.None);
         return NoContent();
+    }
+
+    [HttpGet("/api/restaurants/{restaurantId:guid}/reviews/breakdown")]
+    public async Task<ActionResult<ReviewBreakdownDto>> GetReviewBreakdown(Guid restaurantId, CancellationToken cancellationToken)
+    {
+        Console.WriteLine("Review Breakdown start");
+
+        var breakdown = await db.Reviews.AsNoTracking().Where(r => restaurantId == r.RestaurantId).GroupBy(r => r.Rating).Select(g => new { Rating = g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.Rating, x => x.Count, cancellationToken);
+        var response = new ReviewBreakdownResponse(new ReviewBreakdownDto
+        {
+            Five = breakdown.TryGetValue(5, out var fiveCount) ? fiveCount : 0,
+            Four = breakdown.TryGetValue(4, out var fourCount) ? fourCount : 0,
+            Three = breakdown.TryGetValue(3, out var threeCount) ? threeCount : 0,
+            Two = breakdown.TryGetValue(2, out var twoCount) ? twoCount : 0,
+            One = breakdown.TryGetValue(1, out var oneCount) ? oneCount : 0
+        });
+
+        Console.WriteLine("Review Breakdown: " + response);
+
+        return Ok(response);
     }
 
     private static Expression<Func<Review, ReviewDto>> ToDto(Guid userId) => r => new ReviewDto(

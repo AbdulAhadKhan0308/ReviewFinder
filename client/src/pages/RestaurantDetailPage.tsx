@@ -87,7 +87,7 @@ function RestaurantDetails({ restaurant, isOwner, onReviewsChanged }: DetailsPro
 
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="h4" component="h1" sx={{ overflowWrap: 'anywhere' }}>
-          {restaurant.title}
+          {restaurant.title+"a"}
         </Typography>
         {isOwner && (
           <Stack direction="row" spacing={1}>
