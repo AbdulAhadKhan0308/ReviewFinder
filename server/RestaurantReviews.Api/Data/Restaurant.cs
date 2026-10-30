@@ -10,6 +10,7 @@ public class Restaurant
     public RestaurantImage? Image { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string? Website { get; set; }
     public List<Cuisine> Cuisines { get; set; } = [];
     public List<Review> Reviews { get; set; } = [];
 }

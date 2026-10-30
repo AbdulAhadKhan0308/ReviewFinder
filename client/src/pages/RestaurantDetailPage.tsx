@@ -68,7 +68,8 @@ type DetailsProps = {
 
 function RestaurantDetails({ restaurant, isOwner, onReviewsChanged }: DetailsProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
-
+  console.log("@@@ restaurant in details", restaurant);
+  
   return (
     <Stack spacing={2.5}>
       <Box
@@ -89,6 +90,9 @@ function RestaurantDetails({ restaurant, isOwner, onReviewsChanged }: DetailsPro
         <Typography variant="h4" component="h1" sx={{ overflowWrap: 'anywhere' }}>
           {restaurant.title}
         </Typography>
+        {restaurant.website && (
+          <Typography>{restaurant.website}</Typography>
+        )}
         {isOwner && (
           <Stack direction="row" spacing={1}>
             <Button

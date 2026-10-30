@@ -6,6 +6,7 @@ import { defaultRestaurantImage, formatRating } from '../restaurants/format'
 import { CuisineChips } from './CuisineChips'
 
 export function RestaurantCard({ restaurant }: { restaurant: RestaurantSummary }) {
+  console.log("@@@ restaurant", restaurant)
   return (
     <Card variant="outlined" sx={{ height: '100%' }}>
       <CardActionArea
@@ -32,6 +33,11 @@ export function RestaurantCard({ restaurant }: { restaurant: RestaurantSummary }
               <PlaceOutlinedIcon fontSize="small" aria-hidden />
               {restaurant.location}
             </Typography>
+            {restaurant.website && (
+              <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+                {restaurant.website}
+              </Typography>
+            )}
             <CuisineChips cuisines={restaurant.cuisines} />
             <Typography variant="body2">{formatRating(restaurant.averageRating, restaurant.reviewCount)}</Typography>
           </Stack>

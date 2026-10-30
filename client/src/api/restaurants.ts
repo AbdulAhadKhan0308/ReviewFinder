@@ -12,7 +12,8 @@ export type RestaurantSummary = {
   cuisines: Cuisine[]
   // null when the restaurant has no reviews.
   averageRating: number | null
-  reviewCount: number
+  reviewCount: number,
+  website?: string
 }
 
 export type RestaurantDetail = RestaurantSummary & {
@@ -25,7 +26,8 @@ export type RestaurantInput = {
   title: string
   location: string
   description: string
-  cuisineIds: string[]
+  cuisineIds: string[],
+  website?: string,
   // Base64 of a newly chosen image; left out to keep the current image, if any.
   image?: string
   // Removes the current image when no new one is sent.

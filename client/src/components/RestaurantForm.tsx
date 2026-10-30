@@ -39,6 +39,7 @@ export function RestaurantForm({ cuisines, initial, submitLabel, cancelTo, onSub
   const [title, setTitle] = useState(initial?.title ?? '')
   const [location, setLocation] = useState(initial?.location ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
+  const [website,setWebsite] = useState(initial?.website ?? '');
   const [cuisineIds, setCuisineIds] = useState<string[]>(initial?.cuisines.map((c) => c.id) ?? [])
   const [errors, setErrors] = useState<FormErrors<RestaurantField>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -86,6 +87,7 @@ export function RestaurantForm({ cuisines, initial, submitLabel, cancelTo, onSub
       description: description.trim(),
       cuisineIds,
       removeImage,
+      website: website.trim() || undefined
     }
     const nextErrors = validateRestaurant(input)
     setErrors(nextErrors)
@@ -103,6 +105,7 @@ export function RestaurantForm({ cuisines, initial, submitLabel, cancelTo, onSub
     }
 
     try {
+
       const saved = await onSubmit({ ...input, image })
       // Replace the form in the history so Back doesn't return to a form that was already submitted.
       navigate(`/restaurants/${saved.id}`, { replace: true })
@@ -168,6 +171,14 @@ export function RestaurantForm({ cuisines, initial, submitLabel, cancelTo, onSub
           onChange={(e) => setLocation(e.target.value)}
           error={Boolean(errors.location)}
           helperText={errors.location ?? 'For example, a street address.'}
+        />
+        <TextField
+          label="Website"
+          fullWidth
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          // error={Boolean(errors.website)}
+          // helperText={errors.website ?? 'For example, https://example.com.'}
         />
         <TextField
           label="Description"

@@ -30,6 +30,8 @@ export default function MyRestaurantsPage() {
     </Button>
   )
 
+  // console.log("@@@ query.data.items", (query as any).data.items);
+
   return (
     <>
       <Stack direction="row" sx={{ mb: 3, alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>

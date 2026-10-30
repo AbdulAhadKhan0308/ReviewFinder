@@ -300,6 +300,11 @@ namespace RestaurantReviews.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<string>("Website")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("website");
+
                     b.HasKey("Id")
                         .HasName("pk_restaurants");
 

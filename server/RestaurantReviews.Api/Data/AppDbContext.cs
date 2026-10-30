@@ -52,6 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityUser
             restaurant.Property(r => r.Title).HasMaxLength(100);
             restaurant.Property(r => r.Location).HasMaxLength(200);
             restaurant.Property(r => r.Description).HasMaxLength(2000);
+            restaurant.Property(r => r.Website).HasMaxLength(200);
             // Restrict: deleting an account must not silently delete its restaurants.
             restaurant.HasOne<AppUser>().WithMany().HasForeignKey(r => r.OwnerId).OnDelete(DeleteBehavior.Restrict);
             restaurant.HasIndex(r => r.OwnerId);

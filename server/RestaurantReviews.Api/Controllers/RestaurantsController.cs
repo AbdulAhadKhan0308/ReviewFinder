@@ -30,6 +30,7 @@ public record RestaurantInput
 
     // Base64 of a JPG, PNG or WebP file. Left out to keep the current image, if any.
     public string? Image { get; init; }
+    public string? Website { get; init; }
 
     // Removes the current image when no new one is sent.
     public bool RemoveImage { get; init; }
@@ -53,6 +54,7 @@ public record RestaurantDetail(
     decimal? AverageRating,
     int ReviewCount,
     string Description,
+    string? Website,
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
@@ -86,6 +88,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         r.Reviews.Any() ? Math.Round(r.Reviews.Average(v => (decimal)v.Rating), 2) : null,
         r.Reviews.Count,
         r.Description,
+        r.Website,
         r.CreatedAt,
         r.UpdatedAt);
 
@@ -173,6 +176,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
             .Where(r => r.Id == id)
             .Select(ToDetail)
             .FirstOrDefaultAsync(cancellationToken);
+        Console.WriteLine("resutaruant detail: {0}", detail);
 
         return detail is null ? NotFound() : detail;
     }
@@ -223,6 +227,7 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
             Cuisines = cuisines,
             CreatedAt = now,
             UpdatedAt = now,
+            Website = input.Website
         };
         db.Restaurants.Add(restaurant);
         // Not cancellable: once saving starts, finish it rather than leave the outcome unknown.
@@ -276,6 +281,8 @@ public class RestaurantsController(AppDbContext db) : ControllerBase
         restaurant.Title = input.Title;
         restaurant.Location = input.Location;
         restaurant.Description = input.Description;
+        if (input.Website is not null)
+            restaurant.Website = input.Website;
         restaurant.Cuisines.Clear();
         restaurant.Cuisines.AddRange(cuisines);
         restaurant.UpdatedAt = DateTime.UtcNow;
